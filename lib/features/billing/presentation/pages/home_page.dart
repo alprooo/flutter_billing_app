@@ -6,6 +6,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../billing/presentation/bloc/billing_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../domain/entities/cart_item.dart';
 
@@ -360,7 +361,7 @@ class _HomePageState extends State<HomePage> {
                                 color: Colors.grey,
                                 letterSpacing: 1.2)),
                         Text(
-                          '₹${state.totalAmount.toStringAsFixed(2)}',
+                          formatRupiah(state.totalAmount),
                           style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w900,
@@ -468,7 +469,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '₹${item.product.price.toStringAsFixed(2)}',
+                  formatRupiah(item.product.price),
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,

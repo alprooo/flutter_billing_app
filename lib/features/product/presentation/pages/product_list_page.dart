@@ -5,6 +5,7 @@ import '../bloc/product_bloc.dart';
 import '../../domain/entities/product.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/app_validators.dart';
+import '../../../../core/utils/currency_formatter.dart';
 
 class ProductListPage extends StatefulWidget {
   const ProductListPage({super.key});
@@ -194,7 +195,7 @@ class _ProductListPageState extends State<ProductListPage> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  '₹${product.price.toStringAsFixed(2)}',
+                                  formatRupiah(product.price),
                                   style: TextStyle(
                                       fontWeight: FontWeight.w500,
                                       color: Colors.grey[600]),

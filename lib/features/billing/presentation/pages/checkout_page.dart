@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
 
+import '../../../../core/utils/currency_formatter.dart';
 import '../../../shop/presentation/bloc/shop_bloc.dart';
 import '../bloc/billing_bloc.dart';
 
@@ -120,11 +121,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                             TextAlign.left,
                                           ),
                                           _buildDataCell(
-                                              '₹${item.product.price.toStringAsFixed(2)}',
+                                              formatRupiah(item.product.price),
                                               TextAlign.right,
                                               isSubtitle: true),
                                           _buildDataCell(
-                                              '₹${item.total.toStringAsFixed(2)}',
+                                              formatRupiah(item.total),
                                               TextAlign.right,
                                               isBold: true),
                                         ],
@@ -209,7 +210,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                       ),
                                     ),
                                     Text(
-                                      '₹${billingState.totalAmount.toStringAsFixed(2)}',
+                                      formatRupiah(billingState.totalAmount),
                                       style: const TextStyle(
                                         fontSize: 24,
                                         fontWeight: FontWeight.bold,

@@ -2,6 +2,8 @@ import 'package:intl/intl.dart';
 import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import 'currency_formatter.dart';
+
 class EscPos {
   static const List<int> init = [0x1B, 0x40];
   static const List<int> alignCenter = [0x1B, 0x61, 0x01];
@@ -161,8 +163,8 @@ class PrinterHelper {
     for (var item in items) {
       String name = item['name'].toString();
       String qty = item['qty'].toString();
-      String price = item['price'].toString();
-      String totalItem = item['total'].toString();
+      String price = formatRupiah(item['price'] as num);
+      String totalItem = formatRupiah(item['total'] as num);
 
       String prefix = '${qty}x $name';
       if (prefix.length > 16) prefix = prefix.substring(0, 16);
@@ -178,7 +180,7 @@ class PrinterHelper {
     // Total (Align Right)
     bytes += EscPos.alignRight;
     bytes += EscPos.boldOn;
-    bytes += _textToBytes('TOTAL: $total');
+    bytes += _textToBytes('TOTAL: ${formatRupiah(total)}');
     bytes += EscPos.lineFeed;
     bytes += EscPos.boldOff;
     bytes += EscPos.lineFeed;
