@@ -100,10 +100,25 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       (failure) => emit(state.copyWith(
           status: ProductStatus.error, message: failure.message)),
       (_) {
+        // The restock RPC has already completed successfully. Update the
+        // in-memory list from the known quantity instead of immediately
+        // issuing another products query. That second query could fail after
+        // the stock was saved, which made the UI incorrectly show an error.
+        final updatedProducts = state.products
+            .map((product) => product.id == event.productId
+                ? Product(
+                    id: product.id,
+                    name: product.name,
+                    barcode: product.barcode,
+                    price: product.price,
+                    stock: product.stock + event.quantity,
+                  )
+                : product)
+            .toList(growable: false);
         emit(state.copyWith(
             status: ProductStatus.success,
+            products: updatedProducts,
             message: 'Stock updated successfully'));
-        add(LoadProducts());
       },
     );
   }

@@ -81,6 +81,10 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
+        // Dialogs handle the keyboard themselves. Keeping the POS layout at
+        // its normal size prevents the scanner and cart from being compressed
+        // behind a quantity dialog.
+        resizeToAvoidBottomInset: false,
         body: BlocListener<BillingBloc, BillingState>(
           listenWhen: (previous, current) =>
               previous.error != current.error && current.error != null,
@@ -265,14 +269,117 @@ class _HomePageState extends State<HomePage> {
                 icon: const Icon(Icons.remove),
                 onPressed: () => context.read<BillingBloc>().add(
                     UpdateQuantityEvent(item.product.id, item.quantity - 1))),
-            Text('${item.quantity}',
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+            InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () => _editCartQuantity(item),
+              child: Container(
+                constraints: const BoxConstraints(minWidth: 38),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: .1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text('${item.quantity}',
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
             IconButton(
                 icon: const Icon(Icons.add),
                 onPressed: () => context.read<BillingBloc>().add(
                     UpdateQuantityEvent(item.product.id, item.quantity + 1))),
           ]),
         ),
+      );
+
+  Future<void> _editCartQuantity(CartItem item) async {
+    final billingBloc = context.read<BillingBloc>();
+    final quantity = await showDialog<int>(
+      context: context,
+      builder: (_) => _CartQuantityDialog(
+        productName: item.product.name,
+        currentQuantity: item.quantity,
+        availableStock: item.product.stock,
+      ),
+    );
+    if (!mounted || quantity == null || quantity == item.quantity) return;
+    await Future<void>.delayed(kThemeAnimationDuration);
+    if (!mounted) return;
+    billingBloc.add(UpdateQuantityEvent(item.product.id, quantity));
+  }
+}
+
+class _CartQuantityDialog extends StatefulWidget {
+  final String productName;
+  final int currentQuantity;
+  final int availableStock;
+
+  const _CartQuantityDialog({
+    required this.productName,
+    required this.currentQuantity,
+    required this.availableStock,
+  });
+
+  @override
+  State<_CartQuantityDialog> createState() => _CartQuantityDialogState();
+}
+
+class _CartQuantityDialogState extends State<_CartQuantityDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _quantityController;
+
+  @override
+  void initState() {
+    super.initState();
+    _quantityController =
+        TextEditingController(text: widget.currentQuantity.toString());
+  }
+
+  @override
+  void dispose() {
+    _quantityController.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    if (!_formKey.currentState!.validate()) return;
+    Navigator.of(context).pop(int.parse(_quantityController.text.trim()));
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        scrollable: true,
+        title: const Text('Set quantity'),
+        content: Form(
+          key: _formKey,
+          child: TextFormField(
+            controller: _quantityController,
+            autofocus: true,
+            keyboardType: TextInputType.number,
+            textInputAction: TextInputAction.done,
+            onFieldSubmitted: (_) => _save(),
+            decoration: InputDecoration(
+              labelText: widget.productName,
+              helperText: '${widget.availableStock} available in stock',
+            ),
+            validator: (value) {
+              final quantity = int.tryParse(value?.trim() ?? '');
+              if (quantity == null || quantity <= 0) {
+                return 'Enter a whole number greater than zero.';
+              }
+              if (quantity > widget.availableStock) {
+                return 'Only ${widget.availableStock} available in stock.';
+              }
+              return null;
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel')),
+          FilledButton(onPressed: _save, child: const Text('Update')),
+        ],
       );
 }
 

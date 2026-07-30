@@ -1,6 +1,6 @@
 # Supabase setup
 
-1. Create a Supabase project and run every SQL file in `migrations/` in filename order in the SQL editor (or apply them with the Supabase CLI). Existing projects that already ran the first migration must also run `202607300002_restock_product_rpc.sql`.
+1. Create a Supabase project and run every SQL file in `migrations/` in filename order in the SQL editor (or apply them with the Supabase CLI). Existing projects must run every later migration too, including `202607300004_restock_product_response.sql`.
 2. Deploy the username-login Edge Function after applying `202607300003_username_login.sql`:
 
    ```bash

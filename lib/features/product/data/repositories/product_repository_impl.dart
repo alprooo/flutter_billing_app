@@ -81,7 +81,7 @@ class ProductRepositoryImpl implements ProductRepository {
       return const Left(RemoteFailure('Quantity must be positive.'));
     }
     try {
-      await _client.rpc('restock_product', params: {
+      await _client.rpc('restock_product_v2', params: {
         'p_product_id': id,
         'p_quantity': quantity,
       });

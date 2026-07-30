@@ -50,48 +50,18 @@ class _ProductListPageState extends State<ProductListPage> {
   }
 
   Future<void> _restock(Product product) async {
-    final controller = TextEditingController();
+    final productBloc = context.read<ProductBloc>();
     final quantity = await showDialog<int>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('Restock ${product.name}'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'Quantity to add',
-            hintText: 'e.g. 24',
-          ),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel')),
-          FilledButton(
-              onPressed: () {
-                final value = int.tryParse(controller.text.trim());
-                if (value == null || value <= 0) {
-                  ScaffoldMessenger.of(dialogContext).showSnackBar(
-                    const SnackBar(
-                      content: Text('Enter a whole number greater than zero.'),
-                    ),
-                  );
-                  return;
-                }
-                Navigator.of(dialogContext).pop(value);
-              },
-              child: const Text('Restock')),
-        ],
-      ),
+      builder: (_) => _RestockDialog(productName: product.name),
     );
-    controller.dispose();
     if (!mounted || quantity == null) return;
-    if (quantity > 0) {
-      context
-          .read<ProductBloc>()
-          .add(RestockProduct(productId: product.id, quantity: quantity));
-    }
+    // The dialog route is still leaving the widget tree when its Future
+    // resolves. Wait for that close animation before notifying the page's
+    // inherited Bloc, avoiding a widget-lifecycle assertion on Android.
+    await Future<void>.delayed(kThemeAnimationDuration);
+    if (!mounted) return;
+    productBloc.add(RestockProduct(productId: product.id, quantity: quantity));
   }
 
   Future<void> _importCsv(List<Product> existing) async {
@@ -307,4 +277,61 @@ class _ProductListPageState extends State<ProductListPage> {
                   child: const Text('Delete')),
             ],
           ));
+}
+
+class _RestockDialog extends StatefulWidget {
+  final String productName;
+  const _RestockDialog({required this.productName});
+
+  @override
+  State<_RestockDialog> createState() => _RestockDialogState();
+}
+
+class _RestockDialogState extends State<_RestockDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _quantityController = TextEditingController();
+
+  @override
+  void dispose() {
+    _quantityController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    Navigator.of(context).pop(int.parse(_quantityController.text.trim()));
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        scrollable: true,
+        title: Text('Restock ${widget.productName}'),
+        content: Form(
+          key: _formKey,
+          child: TextFormField(
+            controller: _quantityController,
+            autofocus: true,
+            keyboardType: TextInputType.number,
+            textInputAction: TextInputAction.done,
+            onFieldSubmitted: (_) => _submit(),
+            validator: (value) {
+              final quantity = int.tryParse(value?.trim() ?? '');
+              if (quantity == null || quantity <= 0) {
+                return 'Enter a whole number greater than zero.';
+              }
+              return null;
+            },
+            decoration: const InputDecoration(
+              labelText: 'Quantity to add',
+              hintText: 'e.g. 24',
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel')),
+          FilledButton(onPressed: _submit, child: const Text('Restock')),
+        ],
+      );
 }
