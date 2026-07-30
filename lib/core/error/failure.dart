@@ -9,5 +9,9 @@ abstract class Failure extends Equatable {
 }
 
 class CacheFailure extends Failure {
-  const CacheFailure(String message) : super(message);
+  const CacheFailure(super.message);
+}
+
+class RemoteFailure extends Failure {
+  const RemoteFailure(super.message);
 }

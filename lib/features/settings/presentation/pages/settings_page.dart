@@ -8,6 +8,7 @@ import '../../../shop/presentation/bloc/shop_bloc.dart';
 import '../bloc/printer_bloc.dart';
 import '../bloc/printer_event.dart';
 import '../bloc/printer_state.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -213,6 +214,35 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
 
+            const SizedBox(height: 48),
+            _buildSectionHeader('Session'),
+            _buildListGroup(
+              children: [
+                BlocBuilder<AuthBloc, AuthState>(
+                  builder: (context, state) {
+                    final user = state is Authenticated ? state.user : null;
+                    return _buildListItem(
+                      icon: Icons.person_outline,
+                      title: user?.displayName ?? 'Signed in user',
+                      subtitle: user == null
+                          ? ''
+                          : '${user.role.name.toUpperCase()} • ${user.email}',
+                      trailingIcon: null,
+                    );
+                  },
+                ),
+                _buildDivider(),
+                _buildListItem(
+                  icon: Icons.logout,
+                  title: 'Sign out',
+                  subtitle: 'End this POS session',
+                  trailingIcon: null,
+                  onTap: () => context
+                      .read<AuthBloc>()
+                      .add(const AuthSignOutRequested()),
+                ),
+              ],
+            ),
             const SizedBox(height: 48),
           ],
         ),

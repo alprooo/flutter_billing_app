@@ -48,6 +48,30 @@ class DeleteProductUseCase implements UseCase<void, String> {
   }
 }
 
+class RestockProductUseCase implements UseCase<void, RestockParams> {
+  final ProductRepository repository;
+  RestockProductUseCase(this.repository);
+
+  @override
+  Future<Either<Failure, void>> call(RestockParams params) =>
+      repository.restockProduct(id: params.id, quantity: params.quantity);
+}
+
+class RestockParams {
+  final String id;
+  final int quantity;
+  const RestockParams({required this.id, required this.quantity});
+}
+
+class ImportProductsUseCase implements UseCase<void, List<Product>> {
+  final ProductRepository repository;
+  ImportProductsUseCase(this.repository);
+
+  @override
+  Future<Either<Failure, void>> call(List<Product> params) =>
+      repository.importProducts(params);
+}
+
 class GetProductByBarcodeUseCase implements UseCase<Product, String> {
   final ProductRepository repository;
 

@@ -1,69 +1,122 @@
 import 'package:fpdart/fpdart.dart';
-import '../../../../core/data/hive_database.dart';
 import '../../../../core/error/failure.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
-import '../models/product_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProductRepositoryImpl implements ProductRepository {
+  final SupabaseClient _client;
+
+  ProductRepositoryImpl(this._client);
+
+  Product _toProduct(Map<String, dynamic> row) => Product(
+        id: row['id'] as String,
+        name: row['name'] as String,
+        barcode: row['barcode'] as String,
+        price: (row['price'] as num).toDouble(),
+        stock: row['stock'] as int,
+      );
+
   @override
   Future<Either<Failure, List<Product>>> getProducts() async {
     try {
-      final box = HiveDatabase.productBox;
-      final products = box.values.toList();
-      return Right(products);
+      final rows = await _client.from('products').select().order('name');
+      return Right((rows as List)
+          .map((row) => _toProduct(row as Map<String, dynamic>))
+          .toList());
     } catch (e) {
-      return Left(CacheFailure(e.toString()));
+      return Left(RemoteFailure(e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, Product>> getProductByBarcode(String barcode) async {
     try {
-      final box = HiveDatabase.productBox;
-      final product = box.values.firstWhere(
-        (element) => element.barcode == barcode,
-        orElse: () => throw Exception('Product not found'),
-      );
-      return Right(product);
+      final row = await _client
+          .from('products')
+          .select()
+          .eq('barcode', barcode.trim())
+          .single();
+      return Right(_toProduct(row));
     } catch (e) {
-      return Left(CacheFailure(e.toString()));
+      return Left(RemoteFailure('Product not found: $barcode'));
     }
   }
 
   @override
   Future<Either<Failure, void>> addProduct(Product product) async {
     try {
-      final box = HiveDatabase.productBox;
-      // You can use add() or put()
-      final model = ProductModel.fromEntity(product);
-      await box.put(model.id, model); // Using ID as key
+      await _client.from('products').insert({
+        'id': product.id,
+        'name': product.name.trim(),
+        'barcode': product.barcode.trim(),
+        'price': product.price,
+        'stock': product.stock,
+      });
       return const Right(null);
     } catch (e) {
-      return Left(CacheFailure(e.toString()));
+      return Left(RemoteFailure(e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, void>> updateProduct(Product product) async {
     try {
-      final box = HiveDatabase.productBox;
-      final model = ProductModel.fromEntity(product);
-      await box.put(model.id, model);
+      await _client.from('products').update({
+        'name': product.name.trim(),
+        'price': product.price,
+      }).eq('id', product.id);
       return const Right(null);
     } catch (e) {
-      return Left(CacheFailure(e.toString()));
+      return Left(RemoteFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> restockProduct({
+    required String id,
+    required int quantity,
+  }) async {
+    if (quantity <= 0) {
+      return const Left(RemoteFailure('Quantity must be positive.'));
+    }
+    try {
+      await _client.rpc('restock_product', params: {
+        'p_product_id': id,
+        'p_quantity': quantity,
+      });
+      return const Right(null);
+    } catch (e) {
+      return Left(RemoteFailure(e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, void>> deleteProduct(String id) async {
     try {
-      final box = HiveDatabase.productBox;
-      await box.delete(id);
+      await _client.from('products').delete().eq('id', id);
       return const Right(null);
     } catch (e) {
-      return Left(CacheFailure(e.toString()));
+      return Left(RemoteFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> importProducts(List<Product> products) async {
+    try {
+      await _client.rpc('import_products', params: {
+        'p_products': products
+            .map((product) => {
+                  'barcode': product.barcode.trim(),
+                  'name': product.name.trim(),
+                  'price': product.price,
+                  'stock': product.stock,
+                })
+            .toList(),
+      });
+      return const Right(null);
+    } catch (e) {
+      return Left(RemoteFailure(e.toString()));
     }
   }
 }

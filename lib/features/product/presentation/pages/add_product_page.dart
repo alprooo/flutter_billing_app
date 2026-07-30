@@ -22,6 +22,7 @@ class _AddProductPageState extends State<AddProductPage> {
   String _name = '';
   String _barcode = '';
   double _price = 0.0;
+  int _stock = 0;
 
   void _scanBarcode() async {
     final result = await context.push<String>('/scanner');
@@ -41,12 +42,22 @@ class _AddProductPageState extends State<AddProductPage> {
           productState.products.where((p) => p.barcode == _barcode).firstOrNull;
 
       if (existingProduct != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Product with barcode "$_barcode" already exists!'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (_stock <= 0) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Enter a positive restock quantity.'),
+              backgroundColor: Colors.red));
+          return;
+        }
+        context.read<ProductBloc>().add(
+            RestockProduct(productId: existingProduct.id, quantity: _stock));
+        context.pop();
+        return;
+      }
+
+      if (_name.trim().isEmpty || _price <= 0 || _stock < 0) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Enter a product name, price, and valid stock.'),
+            backgroundColor: Colors.red));
         return;
       }
 
@@ -55,6 +66,7 @@ class _AddProductPageState extends State<AddProductPage> {
         name: _name,
         barcode: _barcode,
         price: _price,
+        stock: _stock,
       );
 
       context.read<ProductBloc>().add(AddProduct(product));
@@ -125,7 +137,6 @@ class _AddProductPageState extends State<AddProductPage> {
                       hintText: 'e.g. Basmati Rice',
                     ),
                     textCapitalization: TextCapitalization.words,
-                    validator: AppValidators.required('Please enter a name'),
                     onSaved: (value) => _name = value!,
                   ),
                   const SizedBox(height: 24),
@@ -141,8 +152,17 @@ class _AddProductPageState extends State<AddProductPage> {
                           fontWeight: FontWeight.w500,
                           color: Colors.black),
                     ),
-                    validator: AppValidators.price,
-                    onSaved: (value) => _price = double.parse(value!),
+                    onSaved: (value) =>
+                        _price = double.tryParse(value ?? '') ?? 0,
+                  ),
+                  const SizedBox(height: 24),
+                  const InputLabel(text: 'Opening / Restock Quantity'),
+                  TextFormField(
+                    initialValue: '0',
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(hintText: '0'),
+                    onSaved: (value) =>
+                        _stock = int.tryParse(value ?? '') ?? -1,
                   ),
                 ],
               ),

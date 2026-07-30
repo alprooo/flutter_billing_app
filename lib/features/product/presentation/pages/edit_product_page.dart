@@ -38,6 +38,7 @@ class _EditProductPageState extends State<EditProductPage> {
         name: _name,
         barcode: widget.product.barcode,
         price: _price,
+        stock: widget.product.stock,
       );
 
       context.read<ProductBloc>().add(UpdateProduct(updatedProduct));

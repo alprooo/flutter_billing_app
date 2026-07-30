@@ -43,11 +43,22 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
         .indexWhere((item) => item.product.id == event.product.id);
     if (existingIndex >= 0) {
       final existingItem = cleanState.cartItems[existingIndex];
+      if (existingItem.quantity >= event.product.stock) {
+        emit(cleanState.copyWith(
+            error:
+                'Only ${event.product.stock} in stock for ${event.product.name}.'));
+        return;
+      }
       final backendItems = List<CartItem>.from(cleanState.cartItems);
       backendItems[existingIndex] =
           existingItem.copyWith(quantity: existingItem.quantity + 1);
       emit(cleanState.copyWith(cartItems: backendItems, error: null));
     } else {
+      if (event.product.stock <= 0) {
+        emit(cleanState.copyWith(
+            error: '${event.product.name} is out of stock.'));
+        return;
+      }
       final newItem = CartItem(product: event.product);
       emit(cleanState.copyWith(
           cartItems: [...cleanState.cartItems, newItem], error: null));
@@ -73,6 +84,12 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
         .indexWhere((item) => item.product.id == event.productId);
     if (index >= 0) {
       final items = List<CartItem>.from(state.cartItems);
+      if (event.quantity > items[index].product.stock) {
+        emit(state.copyWith(
+            error:
+                'Only ${items[index].product.stock} in stock for ${items[index].product.name}.'));
+        return;
+      }
       items[index] = items[index].copyWith(quantity: event.quantity);
       emit(state.copyWith(cartItems: items));
     }

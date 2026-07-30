@@ -2,11 +2,13 @@ import 'package:billing_app/core/widgets/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pretty_qr_code/pretty_qr_code.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
-import '../../../shop/presentation/bloc/shop_bloc.dart';
 import '../bloc/billing_bloc.dart';
+import '../../../transactions/presentation/bloc/transaction_bloc.dart';
+import '../../../shop/presentation/bloc/shop_bloc.dart';
+import '../../../product/presentation/bloc/product_bloc.dart';
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -16,6 +18,7 @@ class CheckoutPage extends StatefulWidget {
 }
 
 class _CheckoutPageState extends State<CheckoutPage> {
+  bool _checkoutRequested = false;
   @override
   Widget build(BuildContext context) {
     const borderColor = Color(0xFFE5E5EA);
@@ -43,27 +46,30 @@ class _CheckoutPageState extends State<CheckoutPage> {
               },
             ),
           ),
-          body: BlocConsumer<BillingBloc, BillingState>(
-            listener: (context, state) {
-              if (state.printSuccess) {
+          body: BlocListener<TransactionBloc, TransactionState>(
+            listener: (context, transactionState) {
+              if (!_checkoutRequested) return;
+              if (transactionState.status == TransactionStatus.completed) {
+                _checkoutRequested = false;
+                context.read<BillingBloc>().add(ClearCartEvent());
+                context.read<ProductBloc>().add(LoadProducts());
+                context
+                    .read<TransactionBloc>()
+                    .add(LoadTransactions(DateTime.now()));
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text('Printed successfully'),
+                    content: Text('Checkout complete'),
                     backgroundColor: Colors.green));
-                // context.read<BillingBloc>().add(ClearCartEvent());
-                // context.go('/');
+                context.go('/');
+              } else if (transactionState.status == TransactionStatus.error) {
+                _checkoutRequested = false;
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content:
+                        Text(transactionState.message ?? 'Checkout failed'),
+                    backgroundColor: Colors.red));
               }
             },
-            builder: (context, billingState) {
-              return BlocBuilder<ShopBloc, ShopState>(
-                  builder: (context, shopState) {
-                String upiId = '';
-                String shopName = 'Shop';
-
-                if (shopState is ShopLoaded) {
-                  upiId = shopState.shop.upiId;
-                  shopName = shopState.shop.name;
-                }
-
+            child: BlocBuilder<BillingBloc, BillingState>(
+              builder: (context, billingState) {
                 return Column(
                   children: [
                     Expanded(
@@ -168,34 +174,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             ),
                             child: Column(
                               children: [
-                                const SizedBox(
-                                  height: 8,
-                                ),
-                                upiId.isNotEmpty
-                                    ? Column(
-                                        children: [
-                                          const Text(
-                                            'Scan to Pay',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black87,
-                                              letterSpacing: 1.1,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          SizedBox(
-                                            width: 180,
-                                            height: 180,
-                                            child: PrettyQrView.data(
-                                              data:
-                                                  'upi://pay?pa=$upiId&pn=$shopName&am=${billingState.totalAmount.toStringAsFixed(2)}&cu=INR',
-                                            ),
-                                          ),
-                                        ],
-                                      )
-                                    : const SizedBox.shrink(),
-                                const SizedBox(height: 15),
+                                const SizedBox(height: 16),
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
@@ -223,35 +202,41 @@ class _CheckoutPageState extends State<CheckoutPage> {
                               ],
                             ),
                           ),
-                          PrimaryButton(
-                            onPressed: () {
-                              if (shopState is ShopLoaded) {
-                                context.read<BillingBloc>().add(
-                                    PrintReceiptEvent(
-                                        shopName: shopState.shop.name,
-                                        address1: shopState.shop.addressLine1,
-                                        address2: shopState.shop.addressLine2,
-                                        phone: shopState.shop.phoneNumber,
-                                        footer: shopState.shop.footerText));
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content:
-                                            Text('Shop details not loaded'),
-                                        backgroundColor: Colors.red));
-                              }
-                            },
-                            label: 'Print Receipt',
-                            icon: Icons.print,
-                            isLoading: billingState.isPrinting,
+                          BlocBuilder<TransactionBloc, TransactionState>(
+                            builder: (context, transactionState) =>
+                                PrimaryButton(
+                              onPressed: transactionState.status ==
+                                      TransactionStatus.completing
+                                  ? null
+                                  : () {
+                                      _checkoutRequested = true;
+                                      final shopState =
+                                          context.read<ShopBloc>().state;
+                                      context
+                                          .read<TransactionBloc>()
+                                          .add(CompleteCheckout(
+                                            clientTransactionId:
+                                                const Uuid().v4(),
+                                            items: billingState.cartItems,
+                                            shopName: shopState is ShopLoaded
+                                                ? shopState.shop.name
+                                                : null,
+                                          ));
+                                    },
+                              label: 'Checkout',
+                              icon: transactionState.status ==
+                                      TransactionStatus.completing
+                                  ? Icons.hourglass_top
+                                  : Icons.check_circle_outline,
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ],
                 );
-              });
-            },
+              },
+            ),
           ),
         ));
   }

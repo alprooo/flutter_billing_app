@@ -29,3 +29,18 @@ class DeleteProduct extends ProductEvent {
   @override
   List<Object> get props => [id];
 }
+
+class RestockProduct extends ProductEvent {
+  final String productId;
+  final int quantity;
+  const RestockProduct({required this.productId, required this.quantity});
+  @override
+  List<Object> get props => [productId, quantity];
+}
+
+class ImportProducts extends ProductEvent {
+  final List<Product> products;
+  const ImportProducts(this.products);
+  @override
+  List<Object> get props => [products];
+}
