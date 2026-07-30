@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +10,8 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../../shop/presentation/bloc/shop_bloc.dart';
+import '../../../product/domain/entities/product.dart';
+import '../../../product/presentation/bloc/product_bloc.dart';
 import '../../domain/entities/cart_item.dart';
 import '../bloc/billing_bloc.dart';
 
@@ -55,36 +59,24 @@ class _HomePageState extends State<HomePage> {
     if (mounted) context.read<BillingBloc>().add(ScanBarcodeEvent(value));
   }
 
-  Future<void> _showManualBarcodeEntry() async {
-    final controller = TextEditingController();
-    final barcode = await showModalBottomSheet<String>(
+  Future<void> _showManualProductSearch() async {
+    final products = context.read<ProductBloc>().state.products;
+    if (products.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('No products are available to search.'),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    }
+
+    final product = await showModalBottomSheet<Product>(
       context: context,
       isScrollControlled: true,
-      builder: (context) => Padding(
-        padding: EdgeInsets.fromLTRB(
-            20, 20, 20, MediaQuery.viewInsetsOf(context).bottom + 20),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text('Enter barcode',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          TextField(
-            controller: controller,
-            autofocus: true,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(hintText: 'Barcode number'),
-            onSubmitted: Navigator.of(context).pop,
-          ),
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            icon: const Icon(Icons.add),
-            label: const Text('Add to cart'),
-          ),
-        ]),
-      ),
+      backgroundColor: Colors.transparent,
+      builder: (_) => _ManualProductSearchSheet(products: products),
     );
-    controller.dispose();
-    if (barcode != null) await _submitBarcode(barcode);
+    if (!mounted || product == null) return;
+    context.read<BillingBloc>().add(AddProductToCartEvent(product));
   }
 
   @override
@@ -135,13 +127,21 @@ class _HomePageState extends State<HomePage> {
               if (barcode != null) _submitBarcode(barcode.rawValue!);
             },
           ),
-          Center(
-            child: Container(
-              width: 230,
-              height: 180,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.greenAccent, width: 3),
-                borderRadius: BorderRadius.circular(16),
+          Positioned(
+            top: MediaQuery.paddingOf(context).top + 72,
+            left: 16,
+            right: 16,
+            bottom: 16,
+            child: LayoutBuilder(
+              builder: (context, constraints) => Center(
+                child: Container(
+                  width: math.min(230, constraints.maxWidth),
+                  height: math.min(180, constraints.maxHeight),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.greenAccent, width: 3),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
               ),
             ),
           ),
@@ -163,7 +163,7 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
               const SizedBox(height: 12),
-              _overlayButton(Icons.edit_note, _showManualBarcodeEntry),
+              _overlayButton(Icons.search_rounded, _showManualProductSearch),
             ]),
           ),
         ]),
@@ -274,4 +274,222 @@ class _HomePageState extends State<HomePage> {
           ]),
         ),
       );
+}
+
+class _ManualProductSearchSheet extends StatefulWidget {
+  final List<Product> products;
+  const _ManualProductSearchSheet({required this.products});
+
+  @override
+  State<_ManualProductSearchSheet> createState() =>
+      _ManualProductSearchSheetState();
+}
+
+class _ManualProductSearchSheetState extends State<_ManualProductSearchSheet> {
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final matches = widget.products
+        .where((product) => product.name.toLowerCase().contains(_query))
+        .toList();
+    return SafeArea(
+      top: false,
+      child: Container(
+        height: MediaQuery.sizeOf(context).height * .7,
+        padding: EdgeInsets.fromLTRB(
+          20,
+          10,
+          20,
+          MediaQuery.viewInsetsOf(context).bottom + 16,
+        ),
+        decoration: const BoxDecoration(
+          color: Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(children: [
+          Container(
+            width: 42,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: .12),
+                borderRadius: BorderRadius.circular(13),
+              ),
+              child: const Icon(Icons.search_rounded,
+                  color: AppTheme.primaryColor),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Find an item',
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                  SizedBox(height: 2),
+                  Text('Search by product name to add it to the cart',
+                      style: TextStyle(fontSize: 12, color: Colors.grey)),
+                ],
+              ),
+            ),
+            IconButton(
+              tooltip: 'Close',
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.close_rounded),
+            ),
+          ]),
+          const SizedBox(height: 18),
+          TextField(
+            controller: _searchController,
+            autofocus: true,
+            textCapitalization: TextCapitalization.words,
+            onChanged: (value) => setState(() => _query = value.toLowerCase()),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.white,
+              prefixIcon: const Icon(Icons.search_rounded),
+              hintText: 'Type a product name',
+              suffixIcon: _query.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: 'Clear search',
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() => _query = '');
+                      },
+                      icon: const Icon(Icons.close),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(children: [
+            Text(_query.isEmpty ? 'ALL PRODUCTS' : 'MATCHING PRODUCTS',
+                style: const TextStyle(
+                    fontSize: 11,
+                    letterSpacing: 1.1,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.grey)),
+            const Spacer(),
+            Text('${matches.length} found',
+                style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          ]),
+          const SizedBox(height: 8),
+          Expanded(
+            child: matches.isEmpty
+                ? const _EmptyProductSearch()
+                : ListView.separated(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    itemCount: matches.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) =>
+                        _ProductSearchResult(product: matches[index]),
+                  ),
+          ),
+        ]),
+      ),
+    );
+  }
+}
+
+class _EmptyProductSearch extends StatelessWidget {
+  const _EmptyProductSearch();
+
+  @override
+  Widget build(BuildContext context) => const Center(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.inventory_2_outlined, size: 42, color: Colors.grey),
+          SizedBox(height: 10),
+          Text('No matching products',
+              style: TextStyle(fontWeight: FontWeight.w700)),
+          SizedBox(height: 4),
+          Text('Try a different product name.',
+              style: TextStyle(fontSize: 12, color: Colors.grey)),
+        ]),
+      );
+}
+
+class _ProductSearchResult extends StatelessWidget {
+  final Product product;
+  const _ProductSearchResult({required this.product});
+
+  @override
+  Widget build(BuildContext context) {
+    final inStock = product.stock > 0;
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: inStock ? () => Navigator.of(context).pop(product) : null,
+        child: Opacity(
+          opacity: inStock ? 1 : .55,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: .1),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: const Icon(Icons.inventory_2_outlined,
+                    color: AppTheme.primaryColor),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(product.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 15)),
+                    const SizedBox(height: 5),
+                    Text(formatRupiah(product.price),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.primaryColor)),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                decoration: BoxDecoration(
+                  color: inStock
+                      ? const Color(0xFFE8F7EE)
+                      : const Color(0xFFFFECEC),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                    inStock ? '${product.stock} in stock' : 'Out of stock',
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: inStock ? const Color(0xFF198754) : Colors.red)),
+              ),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
 }

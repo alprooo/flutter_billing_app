@@ -53,27 +53,41 @@ class _ProductListPageState extends State<ProductListPage> {
     final controller = TextEditingController();
     final quantity = await showDialog<int>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text('Restock ${product.name}'),
         content: TextField(
           controller: controller,
           autofocus: true,
           keyboardType: TextInputType.number,
-          decoration: const InputDecoration(labelText: 'Quantity to add'),
+          decoration: const InputDecoration(
+            labelText: 'Quantity to add',
+            hintText: 'e.g. 24',
+          ),
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('Cancel')),
           FilledButton(
-              onPressed: () =>
-                  Navigator.pop(context, int.tryParse(controller.text)),
+              onPressed: () {
+                final value = int.tryParse(controller.text.trim());
+                if (value == null || value <= 0) {
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    const SnackBar(
+                      content: Text('Enter a whole number greater than zero.'),
+                    ),
+                  );
+                  return;
+                }
+                Navigator.of(dialogContext).pop(value);
+              },
               child: const Text('Restock')),
         ],
       ),
     );
     controller.dispose();
-    if (quantity != null && quantity > 0 && mounted) {
+    if (!mounted || quantity == null) return;
+    if (quantity > 0) {
       context
           .read<ProductBloc>()
           .add(RestockProduct(productId: product.id, quantity: quantity));

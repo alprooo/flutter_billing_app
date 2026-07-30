@@ -30,7 +30,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       AuthSignInRequested event, Emitter<AuthState> emit) async {
     emit(const AuthLoading());
     final result = await _repository.signIn(
-      email: event.email,
+      username: event.username,
       password: event.password,
     );
     result.fold(

@@ -19,21 +19,22 @@ class SupabaseAuthRepository implements AuthRepository {
 
   @override
   Future<Either<Failure, AppUser>> signIn({
-    required String email,
+    required String username,
     required String password,
   }) async {
     try {
-      final response = await _client.auth.signInWithPassword(
-        email: email.trim(),
-        password: password,
+      final response = await _client.functions.invoke('login-with-username',
+          body: {'username': username.trim(), 'password': password});
+      final data = response.data as Map<String, dynamic>;
+      final authResponse = await _client.auth.setSession(
+        data['refresh_token'] as String,
+        accessToken: data['access_token'] as String,
       );
-      final user = response.user;
+      final user = authResponse.user;
       if (user == null) return const Left(RemoteFailure('Sign-in failed.'));
       return _loadProfile(user);
-    } on AuthException catch (error) {
-      return Left(RemoteFailure(error.message));
     } catch (error) {
-      return Left(RemoteFailure(error.toString()));
+      return const Left(RemoteFailure('Invalid username or password.'));
     }
   }
 

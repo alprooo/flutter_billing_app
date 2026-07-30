@@ -12,13 +12,13 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -26,7 +26,7 @@ class _LoginPageState extends State<LoginPage> {
   void _signIn() {
     if (!_formKey.currentState!.validate()) return;
     context.read<AuthBloc>().add(AuthSignInRequested(
-          email: _emailController.text,
+          username: _usernameController.text,
           password: _passwordController.text,
         ));
   }
@@ -62,12 +62,13 @@ class _LoginPageState extends State<LoginPage> {
                         textAlign: TextAlign.center),
                     const SizedBox(height: 32),
                     TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(labelText: 'Email'),
-                      validator: (value) => value != null && value.contains('@')
-                          ? null
-                          : 'Enter a valid email address',
+                      controller: _usernameController,
+                      autocorrect: false,
+                      decoration: const InputDecoration(labelText: 'Username'),
+                      validator: (value) =>
+                          value != null && value.trim().isNotEmpty
+                              ? null
+                              : 'Enter your username',
                     ),
                     const SizedBox(height: 16),
                     TextFormField(

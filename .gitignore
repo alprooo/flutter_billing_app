@@ -33,6 +33,10 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Local Supabase development configuration. The template is safe to commit;
+# your copied file contains project-specific values and stays local.
+/config/supabase.local.json
+
 # Symbolication related
 app.*.symbols
 
