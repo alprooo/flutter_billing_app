@@ -79,6 +79,18 @@ class _HomePageState extends State<HomePage> {
     context.read<BillingBloc>().add(AddProductToCartEvent(product));
   }
 
+  Future<void> _openSettings() async {
+    // Settings can open Product Management, which in turn opens its own
+    // barcode scanner. Release this page's camera first so Android never has
+    // two scanner views competing for it.
+    await _scannerController.stop();
+    if (!mounted) return;
+    await context.push('/settings');
+    if (mounted && widget.isActive) {
+      await _scannerController.start();
+    }
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
         // Dialogs handle the keyboard themselves. Keeping the POS layout at
@@ -196,7 +208,7 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(width: 12),
           IconButton(
             tooltip: 'Profile & settings',
-            onPressed: () => context.push('/settings'),
+            onPressed: _openSettings,
             icon: const Icon(Icons.account_circle_outlined,
                 color: Colors.white, size: 30),
           ),

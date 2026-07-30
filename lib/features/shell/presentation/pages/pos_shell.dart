@@ -34,6 +34,10 @@ class _PosShellState extends State<PosShell> {
       const TransactionsPage(),
     ];
     return Scaffold(
+      // The scanner and cart are nested inside this shell. Let dialogs and
+      // sheets manage the keyboard so the shell does not squeeze the active
+      // page into an overflow while editing a cart quantity.
+      resizeToAvoidBottomInset: false,
       body: IndexedStack(index: _selectedIndex, children: pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
