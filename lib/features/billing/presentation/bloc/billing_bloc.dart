@@ -102,19 +102,34 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
   Future<void> _onPrintReceipt(
       PrintReceiptEvent event, Emitter<BillingState> emit) async {
     final printerHelper = PrinterHelper();
+    emit(state.copyWith(
+        isPrinting: true, printSuccess: false, clearError: true));
 
     if (!printerHelper.isConnected) {
+      final permissionGranted = await printerHelper.checkPermission();
+      if (!permissionGranted) {
+        emit(state.copyWith(
+            isPrinting: false,
+            error: 'Bluetooth permission is required to print receipts.',
+            clearError: false));
+        emit(state.copyWith(clearError: true));
+        return;
+      }
+
       final savedMac = HiveDatabase.settingsBox.get('printer_mac');
       if (savedMac != null) {
         final connected = await printerHelper.connect(savedMac);
         if (!connected) {
           emit(state.copyWith(
-              error: 'Failed to auto-connect to printer!', clearError: false));
+              isPrinting: false,
+              error: 'Failed to auto-connect to printer!',
+              clearError: false));
           emit(state.copyWith(clearError: true));
           return;
         }
       } else {
         emit(state.copyWith(
+            isPrinting: false,
             error: 'Printer not connected & no saved printer found!',
             clearError: false));
         emit(state.copyWith(clearError: true));
@@ -122,15 +137,12 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
       }
     }
 
-    emit(state.copyWith(
-        isPrinting: true, printSuccess: false, clearError: true));
-
     try {
-      final items = state.cartItems
+      final items = event.items
           .map((item) => {
-                'name': item.product.name,
+                'name': item.name,
                 'qty': item.quantity,
-                'price': item.product.price,
+                'price': item.price,
                 'total': item.total,
               })
           .toList();
@@ -141,7 +153,7 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
           address2: event.address2,
           phone: event.phone,
           items: items,
-          total: state.totalAmount,
+          total: event.total,
           footer: event.footer);
 
       emit(state.copyWith(isPrinting: false, printSuccess: true));

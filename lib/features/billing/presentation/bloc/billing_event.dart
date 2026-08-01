@@ -37,12 +37,31 @@ class UpdateQuantityEvent extends BillingEvent {
 
 class ClearCartEvent extends BillingEvent {}
 
+class ReceiptItem extends Equatable {
+  final String name;
+  final int quantity;
+  final double price;
+
+  const ReceiptItem({
+    required this.name,
+    required this.quantity,
+    required this.price,
+  });
+
+  double get total => price * quantity;
+
+  @override
+  List<Object> get props => [name, quantity, price];
+}
+
 class PrintReceiptEvent extends BillingEvent {
   final String shopName;
   final String address1;
   final String address2;
   final String phone;
   final String footer;
+  final List<ReceiptItem> items;
+  final double total;
 
   const PrintReceiptEvent({
     required this.shopName,
@@ -50,8 +69,11 @@ class PrintReceiptEvent extends BillingEvent {
     required this.address2,
     required this.phone,
     required this.footer,
+    required this.items,
+    required this.total,
   });
 
   @override
-  List<Object> get props => [shopName, address1, address2, phone, footer];
+  List<Object> get props =>
+      [shopName, address1, address2, phone, footer, items, total];
 }

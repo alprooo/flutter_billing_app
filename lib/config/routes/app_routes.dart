@@ -8,6 +8,8 @@ import '../../features/billing/presentation/pages/scanner_page.dart';
 import '../../features/billing/presentation/pages/checkout_page.dart';
 import '../../features/product/domain/entities/product.dart';
 import '../../features/auth/presentation/pages/auth_gate.dart';
+import '../../features/transactions/domain/entities/sale_transaction.dart';
+import '../../features/transactions/presentation/pages/digital_receipt_page.dart';
 
 final router = GoRouter(
   initialLocation: '/',
@@ -54,6 +56,15 @@ final router = GoRouter(
     GoRoute(
       path: '/shop',
       builder: (context, state) => const ShopDetailsPage(),
+    ),
+    GoRoute(
+      path: '/receipt',
+      builder: (context, state) {
+        final transaction = state.extra as SaleTransaction?;
+        return transaction == null
+            ? const AuthGate()
+            : DigitalReceiptPage(transaction: transaction);
+      },
     ),
   ],
 );

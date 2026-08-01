@@ -37,7 +37,16 @@ class PrinterHelper {
       Permission.location,
     ].request();
 
-    return statuses.values.every((status) => status.isGranted);
+    final nearbyBluetoothGranted =
+        statuses[Permission.bluetoothScan]?.isGranted == true &&
+            statuses[Permission.bluetoothConnect]?.isGranted == true;
+    final legacyBluetoothGranted =
+        statuses[Permission.bluetooth]?.isGranted == true &&
+            statuses[Permission.location]?.isGranted == true;
+
+    // Android 12+ uses Nearby devices permissions, while older Android
+    // versions require Bluetooth plus location to access paired devices.
+    return nearbyBluetoothGranted || legacyBluetoothGranted;
   }
 
   Future<List<BluetoothInfo>> getBondedDevices() async {
@@ -74,7 +83,9 @@ class PrinterHelper {
   }
 
   Future<void> printText(String text) async {
-    if (!_isConnected) return;
+    if (!_isConnected) {
+      throw StateError('Printer is not connected.');
+    }
 
     // Simple text printing
     // We can use bytes for advanced formatting
@@ -102,6 +113,9 @@ class PrinterHelper {
       // ASCII bytes.
       List<int> bytes = text.codeUnits;
       await PrintBluetoothThermal.writeBytes(bytes);
+    } else {
+      _isConnected = false;
+      throw StateError('Printer connection was lost.');
     }
   }
 
@@ -114,7 +128,15 @@ class PrinterHelper {
     required double total,
     required String footer,
   }) async {
-    if (!_isConnected) return;
+    if (!_isConnected) {
+      throw StateError('Printer is not connected.');
+    }
+
+    final connectionStatus = await PrintBluetoothThermal.connectionStatus;
+    if (!connectionStatus) {
+      _isConnected = false;
+      throw StateError('Printer connection was lost.');
+    }
 
     // Construct ESC/POS bytes manually or using helper
     List<int> bytes = [];
