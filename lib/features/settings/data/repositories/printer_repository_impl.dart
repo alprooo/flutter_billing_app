@@ -49,6 +49,6 @@ class PrinterRepositoryImpl implements PrinterRepository {
   @override
   Future<void> testPrint(String shopName) async {
     await _printerHelper
-        .printText("Test Print\n\n$shopName\n\n----------------\n\n");
+        .printText("Cetak Uji\n\n$shopName\n\n----------------\n\n");
   }
 }

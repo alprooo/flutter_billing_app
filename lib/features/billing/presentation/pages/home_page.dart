@@ -8,6 +8,7 @@ import 'package:vibration/vibration.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/thousands_separator_input_formatter.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../../shop/presentation/bloc/shop_bloc.dart';
 import '../../../product/domain/entities/product.dart';
@@ -63,7 +64,7 @@ class _HomePageState extends State<HomePage> {
     final products = context.read<ProductBloc>().state.products;
     if (products.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('No products are available to search.'),
+        content: Text('Belum ada produk yang dapat dicari.'),
         backgroundColor: Colors.red,
       ));
       return;
@@ -124,7 +125,7 @@ class _HomePageState extends State<HomePage> {
                         if (mounted) _scannerController.start();
                       },
                 icon: Icons.payment,
-                label: 'Review order',
+                label: 'Cek Total Belanja',
               ),
             ),
           ),
@@ -189,7 +190,7 @@ class _HomePageState extends State<HomePage> {
       BlocBuilder<ShopBloc, ShopState>(builder: (context, state) {
         final name = state is ShopLoaded && state.shop.name.trim().isNotEmpty
             ? state.shop.name.trim()
-            : 'Anugrah Ukui';
+            : 'ANUGRAH FOTO';
         final initial = name.characters.first.toUpperCase();
         return Row(children: [
           CircleAvatar(
@@ -207,7 +208,7 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(width: 12),
           IconButton(
-            tooltip: 'Profile & settings',
+            tooltip: 'Profil dan pengaturan',
             onPressed: _openSettings,
             icon: const Icon(Icons.account_circle_outlined,
                 color: Colors.white, size: 30),
@@ -242,10 +243,10 @@ class _HomePageState extends State<HomePage> {
                     Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Scanned items',
+                          const Text('Total Belanja',
                               style: TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.bold)),
-                          Text('$units items',
+                          Text('$units barang',
                               style: const TextStyle(color: Colors.grey)),
                         ]),
                     Text(formatRupiah(state.totalAmount),
@@ -258,7 +259,8 @@ class _HomePageState extends State<HomePage> {
             const Divider(height: 1),
             Expanded(
               child: state.cartItems.isEmpty
-                  ? const Center(child: Text('Scan an item to begin a sale.'))
+                  ? const Center(
+                      child: Text('Pindai barang untuk memulai penjualan.'))
                   : ListView.separated(
                       padding: const EdgeInsets.all(16),
                       itemCount: state.cartItems.length,
@@ -275,7 +277,7 @@ class _HomePageState extends State<HomePage> {
         child: ListTile(
           title: Text(item.product.name),
           subtitle: Text(
-              '${formatRupiah(item.product.price)} • Stock ${item.product.stock}'),
+              '${formatRupiah(item.product.price)} • Stok ${item.product.stock}'),
           trailing: Row(mainAxisSize: MainAxisSize.min, children: [
             IconButton(
                 icon: const Icon(Icons.remove),
@@ -355,32 +357,36 @@ class _CartQuantityDialogState extends State<_CartQuantityDialog> {
 
   void _save() {
     if (!_formKey.currentState!.validate()) return;
-    Navigator.of(context).pop(int.parse(_quantityController.text.trim()));
+    Navigator.of(context)
+        .pop(parseThousandsSeparatedInt(_quantityController.text)!);
   }
 
   @override
   Widget build(BuildContext context) => AlertDialog(
         scrollable: true,
-        title: const Text('Set quantity'),
+        title: const Text('Atur jumlah'),
         content: Form(
           key: _formKey,
           child: TextFormField(
             controller: _quantityController,
             autofocus: true,
             keyboardType: TextInputType.number,
+            inputFormatters: const [
+              IndonesianThousandsSeparatorInputFormatter(),
+            ],
             textInputAction: TextInputAction.done,
             onFieldSubmitted: (_) => _save(),
             decoration: InputDecoration(
               labelText: widget.productName,
-              helperText: '${widget.availableStock} available in stock',
+              helperText: 'Stok tersedia: ${widget.availableStock}',
             ),
             validator: (value) {
-              final quantity = int.tryParse(value?.trim() ?? '');
+              final quantity = parseThousandsSeparatedInt(value);
               if (quantity == null || quantity <= 0) {
-                return 'Enter a whole number greater than zero.';
+                return 'Masukkan bilangan bulat lebih dari nol.';
               }
               if (quantity > widget.availableStock) {
-                return 'Only ${widget.availableStock} available in stock.';
+                return 'Stok yang tersedia hanya ${widget.availableStock}.';
               }
               return null;
             },
@@ -389,8 +395,8 @@ class _CartQuantityDialogState extends State<_CartQuantityDialog> {
         actions: [
           TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel')),
-          FilledButton(onPressed: _save, child: const Text('Update')),
+              child: const Text('Batal')),
+          FilledButton(onPressed: _save, child: const Text('Perbarui')),
         ],
       );
 }
@@ -459,17 +465,17 @@ class _ManualProductSearchSheetState extends State<_ManualProductSearchSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Find an item',
+                  Text('Cari barang',
                       style:
                           TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
                   SizedBox(height: 2),
-                  Text('Search by product name to add it to the cart',
+                  Text('Cari nama produk untuk menambahkannya ke keranjang.',
                       style: TextStyle(fontSize: 12, color: Colors.grey)),
                 ],
               ),
             ),
             IconButton(
-              tooltip: 'Close',
+              tooltip: 'Tutup',
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(Icons.close_rounded),
             ),
@@ -484,11 +490,11 @@ class _ManualProductSearchSheetState extends State<_ManualProductSearchSheet> {
               filled: true,
               fillColor: Colors.white,
               prefixIcon: const Icon(Icons.search_rounded),
-              hintText: 'Type a product name',
+              hintText: 'Ketik nama produk',
               suffixIcon: _query.isEmpty
                   ? null
                   : IconButton(
-                      tooltip: 'Clear search',
+                      tooltip: 'Hapus pencarian',
                       onPressed: () {
                         _searchController.clear();
                         setState(() => _query = '');
@@ -499,14 +505,14 @@ class _ManualProductSearchSheetState extends State<_ManualProductSearchSheet> {
           ),
           const SizedBox(height: 18),
           Row(children: [
-            Text(_query.isEmpty ? 'ALL PRODUCTS' : 'MATCHING PRODUCTS',
+            Text(_query.isEmpty ? 'SEMUA PRODUK' : 'PRODUK YANG COCOK',
                 style: const TextStyle(
                     fontSize: 11,
                     letterSpacing: 1.1,
                     fontWeight: FontWeight.w800,
                     color: Colors.grey)),
             const Spacer(),
-            Text('${matches.length} found',
+            Text('${matches.length} ditemukan',
                 style: const TextStyle(fontSize: 12, color: Colors.grey)),
           ]),
           const SizedBox(height: 8),
@@ -535,10 +541,10 @@ class _EmptyProductSearch extends StatelessWidget {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Icon(Icons.inventory_2_outlined, size: 42, color: Colors.grey),
           SizedBox(height: 10),
-          Text('No matching products',
+          Text('Produk tidak ditemukan',
               style: TextStyle(fontWeight: FontWeight.w700)),
           SizedBox(height: 4),
-          Text('Try a different product name.',
+          Text('Coba nama produk yang berbeda.',
               style: TextStyle(fontSize: 12, color: Colors.grey)),
         ]),
       );

@@ -12,7 +12,7 @@ class SupabaseTransactionRepository implements TransactionRepository {
   SupabaseTransactionRepository(this._client);
 
   SaleTransactionItem _toItem(Map<String, dynamic> row) => SaleTransactionItem(
-        productId: row['product_id'] as String,
+        productId: row['product_id'] as String?,
         barcode: row['barcode'] as String,
         productName: row['product_name'] as String,
         unitPrice: (row['unit_price'] as num).toDouble(),
@@ -29,7 +29,7 @@ class SupabaseTransactionRepository implements TransactionRepository {
       staffId: row['staff_id'] as String,
       staffName: (profile?['display_name'] as String?)?.isNotEmpty == true
           ? profile!['display_name'] as String
-          : 'Staff',
+          : 'Staf',
       completedAt: DateTime.parse(row['completed_at'] as String).toLocal(),
       total: (row['total'] as num).toDouble(),
       shopName: row['shop_name'] as String?,

@@ -45,11 +45,11 @@ class _PosShellState extends State<PosShell> {
             setState(() => _selectedIndex = index),
         destinations: const [
           NavigationDestination(
-              icon: Icon(Icons.qr_code_scanner), label: 'Scan'),
+              icon: Icon(Icons.qr_code_scanner), label: 'Pindai'),
           NavigationDestination(
-              icon: Icon(Icons.inventory_2_outlined), label: 'Inventory'),
+              icon: Icon(Icons.inventory_2_outlined), label: 'Stok'),
           NavigationDestination(
-              icon: Icon(Icons.receipt_long_outlined), label: 'Transactions'),
+              icon: Icon(Icons.receipt_long_outlined), label: 'Transaksi'),
         ],
       ),
     );

@@ -49,7 +49,7 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
       (transaction) => emit(state.copyWith(
           status: TransactionStatus.completed,
           lastCompleted: transaction,
-          message: 'Checkout complete')),
+          message: 'Pembayaran selesai')),
     );
   }
 }

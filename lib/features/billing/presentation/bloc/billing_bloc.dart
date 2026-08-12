@@ -26,8 +26,8 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
       ScanBarcodeEvent event, Emitter<BillingState> emit) async {
     final result = await getProductByBarcodeUseCase(event.barcode);
     result.fold(
-      (failure) =>
-          emit(state.copyWith(error: 'Product not found: ${event.barcode}')),
+      (failure) => emit(
+          state.copyWith(error: 'Produk tidak ditemukan: ${event.barcode}')),
       (product) {
         add(AddProductToCartEvent(product));
       },
@@ -46,7 +46,7 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
       if (existingItem.quantity >= event.product.stock) {
         emit(cleanState.copyWith(
             error:
-                'Only ${event.product.stock} in stock for ${event.product.name}.'));
+                'Stok ${event.product.name} hanya tersisa ${event.product.stock}.'));
         return;
       }
       final backendItems = List<CartItem>.from(cleanState.cartItems);
@@ -55,8 +55,7 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
       emit(cleanState.copyWith(cartItems: backendItems, error: null));
     } else {
       if (event.product.stock <= 0) {
-        emit(cleanState.copyWith(
-            error: '${event.product.name} is out of stock.'));
+        emit(cleanState.copyWith(error: '${event.product.name} sedang habis.'));
         return;
       }
       final newItem = CartItem(product: event.product);
@@ -87,7 +86,7 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
       if (event.quantity > items[index].product.stock) {
         emit(state.copyWith(
             error:
-                'Only ${items[index].product.stock} in stock for ${items[index].product.name}.'));
+                'Stok ${items[index].product.name} hanya tersisa ${items[index].product.stock}.'));
         return;
       }
       items[index] = items[index].copyWith(quantity: event.quantity);
@@ -110,7 +109,7 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
       if (!permissionGranted) {
         emit(state.copyWith(
             isPrinting: false,
-            error: 'Bluetooth permission is required to print receipts.',
+            error: 'Izin Bluetooth diperlukan untuk mencetak struk.',
             clearError: false));
         emit(state.copyWith(clearError: true));
         return;
@@ -122,7 +121,7 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
         if (!connected) {
           emit(state.copyWith(
               isPrinting: false,
-              error: 'Failed to auto-connect to printer!',
+              error: 'Gagal terhubung otomatis ke printer!',
               clearError: false));
           emit(state.copyWith(clearError: true));
           return;
@@ -130,7 +129,7 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
       } else {
         emit(state.copyWith(
             isPrinting: false,
-            error: 'Printer not connected & no saved printer found!',
+            error: 'Printer belum terhubung dan belum ada printer tersimpan!',
             clearError: false));
         emit(state.copyWith(clearError: true));
         return;
@@ -159,7 +158,7 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
       emit(state.copyWith(isPrinting: false, printSuccess: true));
     } catch (e) {
       emit(state.copyWith(
-          isPrinting: false, error: 'Print failed: $e', clearError: false));
+          isPrinting: false, error: 'Cetak gagal: $e', clearError: false));
       // Reset error instantly avoids sticky error
       emit(state.copyWith(clearError: true));
     }

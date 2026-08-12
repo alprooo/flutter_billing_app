@@ -39,7 +39,7 @@ class ProductRepositoryImpl implements ProductRepository {
           .single();
       return Right(_toProduct(row));
     } catch (e) {
-      return Left(RemoteFailure('Product not found: $barcode'));
+      return Left(RemoteFailure('Produk tidak ditemukan: $barcode'));
     }
   }
 
@@ -78,7 +78,7 @@ class ProductRepositoryImpl implements ProductRepository {
     required int quantity,
   }) async {
     if (quantity <= 0) {
-      return const Left(RemoteFailure('Quantity must be positive.'));
+      return const Left(RemoteFailure('Jumlah harus lebih dari nol.'));
     }
     try {
       await _client.rpc('restock_product_v2', params: {

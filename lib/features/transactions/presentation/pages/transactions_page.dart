@@ -45,7 +45,7 @@ class TransactionsPage extends StatelessWidget {
                 child: Row(
                   children: [
                     const Expanded(
-                      child: Text('Transactions',
+                      child: Text('Transaksi',
                           style: TextStyle(
                               fontSize: 22, fontWeight: FontWeight.bold)),
                     ),
@@ -71,10 +71,11 @@ class TransactionsPage extends StatelessWidget {
                     : state.status == TransactionStatus.error
                         ? Center(
                             child: Text(state.message ??
-                                'Could not load transactions.'))
+                                'Tidak dapat memuat transaksi.'))
                         : state.transactions.isEmpty
                             ? const Center(
-                                child: Text('No transactions for this day.'))
+                                child:
+                                    Text('Tidak ada transaksi pada hari ini.'))
                             : RefreshIndicator(
                                 onRefresh: () async => context
                                     .read<TransactionBloc>()
@@ -97,7 +98,7 @@ class TransactionsPage extends StatelessWidget {
                                             style: const TextStyle(
                                                 fontWeight: FontWeight.bold)),
                                         subtitle: Text(
-                                            '${transaction.unitsSold} items • ${DateFormat('HH:mm').format(transaction.completedAt)}\n${transaction.staffName}'),
+                                            '${transaction.unitsSold} barang • ${DateFormat('HH:mm').format(transaction.completedAt)}\n${transaction.staffName}'),
                                         isThreeLine: true,
                                         trailing:
                                             const Icon(Icons.chevron_right),
@@ -136,11 +137,11 @@ class _KpiRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
           children: [
-            _card('Sales', '$count', onTap: onSalesTap),
+            _card('Penjualan', '$count', onTap: onSalesTap),
             const SizedBox(width: 8),
-            _card('Units', '$units'),
+            _card('Barang', '$units'),
             const SizedBox(width: 8),
-            _card('Gross', formatRupiah(gross)),
+            _card('Total', formatRupiah(gross)),
           ],
         ),
       );
@@ -221,7 +222,7 @@ class _SalesByUserSheet extends StatelessWidget {
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Sales by user',
+                    const Text('Penjualan per pengguna',
                         style: TextStyle(
                             fontSize: 20, fontWeight: FontWeight.w800)),
                     Text(DateFormat('d MMMM y').format(date),
@@ -237,7 +238,8 @@ class _SalesByUserSheet extends StatelessWidget {
           const SizedBox(height: 16),
           Flexible(
             child: sorted.isEmpty
-                ? const Center(child: Text('No sales for this day.'))
+                ? const Center(
+                    child: Text('Tidak ada penjualan pada hari ini.'))
                 : ListView.separated(
                     shrinkWrap: true,
                     itemCount: sorted.length,
@@ -264,7 +266,7 @@ class _SalesByUserSheet extends StatelessWidget {
                                       style: const TextStyle(
                                           fontWeight: FontWeight.w700)),
                                   const SizedBox(height: 3),
-                                  Text('${summary.transactionCount} sales',
+                                  Text('${summary.transactionCount} penjualan',
                                       style: const TextStyle(
                                           fontSize: 12, color: Colors.grey)),
                                 ]),

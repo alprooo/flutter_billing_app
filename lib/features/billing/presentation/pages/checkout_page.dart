@@ -20,6 +20,7 @@ class CheckoutPage extends StatefulWidget {
 
 class _CheckoutPageState extends State<CheckoutPage> {
   bool _checkoutRequested = false;
+  final String _clientTransactionId = const Uuid().v4();
   SaleTransaction? _receiptAwaitingPrint;
   @override
   Widget build(BuildContext context) {
@@ -27,7 +28,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Checkout',
+        title: const Text('Pembayaran',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
@@ -44,7 +45,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
             listener: (context, transactionState) {
               if (!_checkoutRequested) return;
               if (transactionState.status == TransactionStatus.completed) {
-                _checkoutRequested = false;
+                setState(() => _checkoutRequested = false);
                 context.read<ProductBloc>().add(LoadProducts());
                 context
                     .read<TransactionBloc>()
@@ -59,10 +60,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 _receiptAwaitingPrint = transaction;
                 _printCompletedTransaction(context, transaction);
               } else if (transactionState.status == TransactionStatus.error) {
-                _checkoutRequested = false;
+                setState(() => _checkoutRequested = false);
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content:
-                        Text(transactionState.message ?? 'Checkout failed'),
+                        Text(transactionState.message ?? 'Pembayaran gagal'),
                     backgroundColor: Colors.red));
               }
             },
@@ -82,7 +83,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
               if (billingState.printSuccess) {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text('Receipt printed'),
+                    content: Text('Struk berhasil dicetak'),
                     backgroundColor: Colors.green));
               } else if (billingState.error != null) {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -134,8 +135,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                   ),
                                   children: [
                                     _buildHeaderCell(
-                                        'Product Name', TextAlign.left),
-                                    _buildHeaderCell('Price', TextAlign.right),
+                                        'Nama Produk', TextAlign.left),
+                                    _buildHeaderCell('Harga', TextAlign.right),
                                     _buildHeaderCell('Total', TextAlign.right),
                                   ],
                                 ),
@@ -198,7 +199,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  'GRAND TOTAL',
+                                  'TOTAL BELANJA',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
@@ -220,48 +221,29 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           ],
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                        child: OutlinedButton.icon(
-                          onPressed: billingState.isPrinting
-                              ? null
-                              : () => _printReceipt(context, billingState),
-                          icon: billingState.isPrinting
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Icon(Icons.print_outlined),
-                          label: Text(billingState.isPrinting
-                              ? 'Printing receipt...'
-                              : 'Print Receipt'),
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(50),
-                          ),
-                        ),
-                      ),
                       BlocBuilder<TransactionBloc, TransactionState>(
                         builder: (context, transactionState) => PrimaryButton(
                           onPressed: transactionState.status ==
-                                  TransactionStatus.completing
+                                      TransactionStatus.completing ||
+                                  _checkoutRequested
                               ? null
                               : () {
-                                  _checkoutRequested = true;
+                                  if (_checkoutRequested) return;
+                                  setState(() => _checkoutRequested = true);
                                   final shopState =
                                       context.read<ShopBloc>().state;
                                   context
                                       .read<TransactionBloc>()
                                       .add(CompleteCheckout(
-                                        clientTransactionId: const Uuid().v4(),
+                                        clientTransactionId:
+                                            _clientTransactionId,
                                         items: billingState.cartItems,
                                         shopName: shopState is ShopLoaded
                                             ? shopState.shop.name
                                             : null,
                                       ));
                                 },
-                          label: 'Checkout',
+                          label: 'Bayar',
                           icon: transactionState.status ==
                                   TransactionStatus.completing
                               ? Icons.hourglass_top
@@ -279,38 +261,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
-  void _printReceipt(BuildContext context, BillingState billingState) {
-    final shopState = context.read<ShopBloc>().state;
-    if (shopState is! ShopLoaded) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Shop details not loaded'),
-          backgroundColor: Colors.red));
-      return;
-    }
-
-    context.read<BillingBloc>().add(PrintReceiptEvent(
-          shopName: shopState.shop.name,
-          address1: shopState.shop.addressLine1,
-          address2: shopState.shop.addressLine2,
-          phone: shopState.shop.phoneNumber,
-          footer: shopState.shop.footerText,
-          items: billingState.cartItems
-              .map((item) => ReceiptItem(
-                    name: item.product.name,
-                    quantity: item.quantity,
-                    price: item.product.price,
-                  ))
-              .toList(),
-          total: billingState.totalAmount,
-        ));
-  }
-
   void _printCompletedTransaction(
       BuildContext context, SaleTransaction transaction) {
     final shopState = context.read<ShopBloc>().state;
     final shop = shopState is ShopLoaded ? shopState.shop : null;
     context.read<BillingBloc>().add(PrintReceiptEvent(
-          shopName: shop?.name ?? transaction.shopName ?? 'Anugrah Ukui',
+          shopName: shop?.name ?? transaction.shopName ?? 'ANUGRAH FOTO',
           address1: shop?.addressLine1 ?? '',
           address2: shop?.addressLine2 ?? '',
           phone: shop?.phoneNumber ?? '',
@@ -329,7 +285,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   void _finishCheckout(BuildContext context, SaleTransaction? transaction) {
     context.read<BillingBloc>().add(ClearCartEvent());
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Checkout complete'), backgroundColor: Colors.green));
+        content: Text('Pembayaran selesai'), backgroundColor: Colors.green));
     if (transaction != null) {
       context.go('/receipt', extra: transaction);
     } else {

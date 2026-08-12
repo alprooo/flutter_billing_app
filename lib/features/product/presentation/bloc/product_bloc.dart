@@ -53,7 +53,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       (_) {
         emit(state.copyWith(
             status: ProductStatus.success,
-            message: 'Product added successfully'));
+            message: 'Produk berhasil ditambahkan'));
         add(LoadProducts());
       },
     );
@@ -69,7 +69,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       (_) {
         emit(state.copyWith(
             status: ProductStatus.success,
-            message: 'Product updated successfully'));
+            message: 'Produk berhasil diperbarui'));
         add(LoadProducts());
       },
     );
@@ -84,8 +84,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
           status: ProductStatus.error, message: failure.message)),
       (_) {
         emit(state.copyWith(
-            status: ProductStatus.success,
-            message: 'Product deleted successfully'));
+            status: ProductStatus.success, message: 'Produk berhasil dihapus'));
         add(LoadProducts());
       },
     );
@@ -118,7 +117,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         emit(state.copyWith(
             status: ProductStatus.success,
             products: updatedProducts,
-            message: 'Stock updated successfully'));
+            message: 'Stok berhasil diperbarui'));
       },
     );
   }

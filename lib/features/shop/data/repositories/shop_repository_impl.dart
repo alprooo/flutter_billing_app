@@ -18,10 +18,10 @@ class ShopRepositoryImpl implements ShopRepository {
       } else {
         // Return default shop if not found
         return const Right(Shop(
-            name: 'Anugrah Ukui',
-            addressLine1: 'Samrajpet, Mecheri',
-            addressLine2: 'Salem - 636453',
-            phoneNumber: '+917010674588',
+            name: 'ANUGRAH FOTO',
+            addressLine1: 'Ukui 1, Kab. Pelalawan, Riau',
+            addressLine2: '',
+            phoneNumber: '',
             upiId: 'programmer.2nd@gmail.com',
             footerText: 'Thank you, Visit again!!!'));
       }

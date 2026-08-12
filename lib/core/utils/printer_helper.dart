@@ -84,7 +84,7 @@ class PrinterHelper {
 
   Future<void> printText(String text) async {
     if (!_isConnected) {
-      throw StateError('Printer is not connected.');
+      throw StateError('Printer belum terhubung.');
     }
 
     // Simple text printing
@@ -115,7 +115,7 @@ class PrinterHelper {
       await PrintBluetoothThermal.writeBytes(bytes);
     } else {
       _isConnected = false;
-      throw StateError('Printer connection was lost.');
+      throw StateError('Koneksi printer terputus.');
     }
   }
 
@@ -129,13 +129,13 @@ class PrinterHelper {
     required String footer,
   }) async {
     if (!_isConnected) {
-      throw StateError('Printer is not connected.');
+      throw StateError('Printer belum terhubung.');
     }
 
     final connectionStatus = await PrintBluetoothThermal.connectionStatus;
     if (!connectionStatus) {
       _isConnected = false;
-      throw StateError('Printer connection was lost.');
+      throw StateError('Koneksi printer terputus.');
     }
 
     // Construct ESC/POS bytes manually or using helper
@@ -176,7 +176,7 @@ class PrinterHelper {
 
     // Header (Align Left)
     bytes += EscPos.alignLeft;
-    bytes += _textToBytes('Item            Price   Total');
+    bytes += _textToBytes('Barang          Harga   Total');
     bytes += EscPos.lineFeed;
     bytes += _textToBytes('--------------------------------');
     bytes += EscPos.lineFeed;

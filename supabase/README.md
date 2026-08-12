@@ -22,6 +22,13 @@
      --dart-define=SUPABASE_ANON_KEY=your-anon-key
    ```
 
+5. Build a release APK with the same values:
+
+   ```bash
+   flutter build apk --release \
+     --dart-define-from-file=config/supabase.local.json
+   ```
+
 The anonymous key is designed for clients; RLS is the security boundary. Never put a Supabase service-role key in the app.
 
 ### Save the Flutter values once for local development
@@ -33,6 +40,12 @@ cp config/supabase.local.json.example config/supabase.local.json
 ```
 
 Then run `./scripts/run_local.sh` whenever you want to test. The local JSON file is ignored by Git. Alternatively, select **Anugrah Ukui (local Supabase)** and press Run/Debug in VS Code.
+
+The same local JSON file can be reused for release builds:
+
+```bash
+flutter build apk --release --dart-define-from-file=config/supabase.local.json
+```
 
 ## Seed the development users
 

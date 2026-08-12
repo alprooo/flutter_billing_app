@@ -31,7 +31,7 @@ class SupabaseAuthRepository implements AuthRepository {
         accessToken: data['access_token'] as String,
       );
       final user = authResponse.user;
-      if (user == null) return const Left(RemoteFailure('Sign-in failed.'));
+      if (user == null) return const Left(RemoteFailure('Gagal masuk.'));
       return _loadProfile(user);
     } catch (error) {
       return const Left(RemoteFailure('Invalid username or password.'));
@@ -56,8 +56,7 @@ class SupabaseAuthRepository implements AuthRepository {
         role: role,
       ));
     } on PostgrestException catch (error) {
-      return Left(
-          RemoteFailure('Could not load your profile: ${error.message}'));
+      return Left(RemoteFailure('Gagal memuat profil Anda: ${error.message}'));
     } catch (error) {
       return Left(RemoteFailure(error.toString()));
     }

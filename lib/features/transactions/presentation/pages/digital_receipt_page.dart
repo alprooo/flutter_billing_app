@@ -40,10 +40,10 @@ class _DigitalReceiptPageState extends State<DigitalReceiptPage> {
       final client = Supabase.instance.client;
       final currentUser = client.auth.currentUser;
       if (currentUser == null) {
-        throw StateError('Sign in is required to create a digital receipt.');
+        throw StateError('Anda harus masuk untuk membuat struk digital.');
       }
       if (currentUser.id != transaction.staffId) {
-        throw StateError('This receipt belongs to a different staff account.');
+        throw StateError('Struk ini milik akun staf lain.');
       }
 
       final imageBytes = await ReceiptImageGenerator.generate(transaction);
@@ -74,7 +74,7 @@ class _DigitalReceiptPageState extends State<DigitalReceiptPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
-          title: const Text('Digital Receipt'),
+          title: const Text('Struk Digital'),
           centerTitle: true,
           leading: IconButton(
             icon: const Icon(Icons.close),
@@ -87,7 +87,7 @@ class _DigitalReceiptPageState extends State<DigitalReceiptPage> {
             children: [
               const Icon(Icons.check_circle, color: Colors.green, size: 56),
               const SizedBox(height: 12),
-              const Text('Payment complete',
+              const Text('Pembayaran selesai',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
               const SizedBox(height: 4),
@@ -104,7 +104,7 @@ class _DigitalReceiptPageState extends State<DigitalReceiptPage> {
                       Text(
                           transaction.shopName?.isNotEmpty == true
                               ? transaction.shopName!
-                              : 'Anugrah Ukui',
+                              : 'ANUGRAH FOTO',
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                               fontSize: 18, fontWeight: FontWeight.bold)),
@@ -146,7 +146,7 @@ class _DigitalReceiptPageState extends State<DigitalReceiptPage> {
               FilledButton.icon(
                 onPressed: () => context.go('/'),
                 icon: const Icon(Icons.done),
-                label: const Text('Done'),
+                label: const Text('Selesai'),
               ),
             ],
           ),
@@ -159,7 +159,7 @@ class _DigitalReceiptPageState extends State<DigitalReceiptPage> {
         children: [
           CircularProgressIndicator(),
           SizedBox(height: 12),
-          Text('Preparing digital receipt...'),
+          Text('Menyiapkan struk digital...'),
         ],
       );
     }
@@ -169,12 +169,12 @@ class _DigitalReceiptPageState extends State<DigitalReceiptPage> {
         children: [
           const Icon(Icons.cloud_off, color: Colors.red, size: 36),
           const SizedBox(height: 8),
-          const Text('Could not upload the receipt image.'),
+          const Text('Gagal mengunggah gambar struk.'),
           const SizedBox(height: 8),
           OutlinedButton.icon(
             onPressed: _uploadReceipt,
             icon: const Icon(Icons.refresh),
-            label: const Text('Try again'),
+            label: const Text('Coba lagi'),
           ),
         ],
       );
@@ -182,7 +182,7 @@ class _DigitalReceiptPageState extends State<DigitalReceiptPage> {
 
     return Column(
       children: [
-        Text('Scan to open the digital receipt',
+        Text('Pindai untuk membuka struk digital',
             textAlign: TextAlign.center,
             style: TextStyle(
                 color: Colors.grey[700], fontWeight: FontWeight.w600)),
@@ -193,7 +193,7 @@ class _DigitalReceiptPageState extends State<DigitalReceiptPage> {
           child: PrettyQrView.data(data: _receiptUrl!),
         ),
         const SizedBox(height: 12),
-        Text('Receipt #${transaction.id.substring(0, 8).toUpperCase()}',
+        Text('Struk #${transaction.id.substring(0, 8).toUpperCase()}',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey[600], fontSize: 12)),
       ],

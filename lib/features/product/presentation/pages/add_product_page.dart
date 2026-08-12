@@ -9,6 +9,7 @@ import '../bloc/product_bloc.dart';
 import '../../domain/entities/product.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/app_validators.dart';
+import '../../../../core/utils/thousands_separator_input_formatter.dart';
 
 class AddProductPage extends StatefulWidget {
   const AddProductPage({super.key});
@@ -44,7 +45,7 @@ class _AddProductPageState extends State<AddProductPage> {
       if (existingProduct != null) {
         if (_stock <= 0) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Enter a positive restock quantity.'),
+              content: Text('Masukkan jumlah restok lebih dari nol.'),
               backgroundColor: Colors.red));
           return;
         }
@@ -56,7 +57,7 @@ class _AddProductPageState extends State<AddProductPage> {
 
       if (_name.trim().isEmpty || _price <= 0 || _stock < 0) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Enter a product name, price, and valid stock.'),
+            content: Text('Masukkan nama produk, harga, dan stok yang valid.'),
             backgroundColor: Colors.red));
         return;
       }
@@ -85,7 +86,7 @@ class _AddProductPageState extends State<AddProductPage> {
                 size: 28, color: Theme.of(context).primaryColor),
             onPressed: () => context.pop(),
           ),
-          title: const Text('Add Product',
+          title: const Text('Tambah Produk',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           centerTitle: true,
         ),
@@ -105,10 +106,9 @@ class _AddProductPageState extends State<AddProductPage> {
                           key: ValueKey(_barcode),
                           initialValue: _barcode,
                           decoration: const InputDecoration(
-                            hintText: 'Scan or enter barcode',
+                            hintText: 'Pindai atau masukkan barcode',
                           ),
-                          validator:
-                              AppValidators.required('Please enter a barcode'),
+                          validator: AppValidators.required('Masukkan barcode'),
                           onSaved: (value) => _barcode = value!,
                         ),
                       ),
@@ -128,41 +128,46 @@ class _AddProductPageState extends State<AddProductPage> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  const Text('Tap the icon to open camera scanner',
+                  const Text('Ketuk ikon untuk membuka pemindai kamera',
                       style: TextStyle(fontSize: 12, color: Color(0xFF4C669A))),
                   const SizedBox(height: 24),
-                  const InputLabel(text: 'Product Name'),
+                  const InputLabel(text: 'Nama Produk'),
                   TextFormField(
                     decoration: const InputDecoration(
-                      hintText: 'e.g. Basmati Rice',
+                      hintText: 'contoh: Beras',
                     ),
                     textCapitalization: TextCapitalization.words,
                     onSaved: (value) => _name = value!,
                   ),
                   const SizedBox(height: 24),
-                  const InputLabel(text: 'Price'),
+                  const InputLabel(text: 'Harga'),
                   TextFormField(
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: const [
+                      IndonesianThousandsSeparatorInputFormatter(),
+                    ],
                     decoration: const InputDecoration(
-                      hintText: '0.00',
+                      hintText: '0',
                       prefixText: 'Rp ',
                       prefixStyle: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
                           color: Colors.black),
                     ),
-                    onSaved: (value) =>
-                        _price = double.tryParse(value ?? '') ?? 0,
+                    onSaved: (value) => _price =
+                        (parseThousandsSeparatedInt(value) ?? 0).toDouble(),
                   ),
                   const SizedBox(height: 24),
-                  const InputLabel(text: 'Opening / Restock Quantity'),
+                  const InputLabel(text: 'Jumlah Stok Awal / Restok'),
                   TextFormField(
                     initialValue: '0',
                     keyboardType: TextInputType.number,
+                    inputFormatters: const [
+                      IndonesianThousandsSeparatorInputFormatter(),
+                    ],
                     decoration: const InputDecoration(hintText: '0'),
                     onSaved: (value) =>
-                        _stock = int.tryParse(value ?? '') ?? -1,
+                        _stock = parseThousandsSeparatedInt(value) ?? -1,
                   ),
                 ],
               ),
@@ -172,7 +177,7 @@ class _AddProductPageState extends State<AddProductPage> {
         bottomNavigationBar: PrimaryButton(
           onPressed: _submit,
           icon: Icons.add_circle,
-          label: 'Add Product',
+          label: 'Tambah Produk',
         ));
   }
 }

@@ -56,14 +56,14 @@ class ReceiptImageGenerator {
 
     final shopName = transaction.shopName?.trim();
     drawText(
-      shopName?.isNotEmpty == true ? shopName! : 'Anugrah Ukui',
+      shopName?.isNotEmpty == true ? shopName! : 'ANUGRAH FOTO',
       34,
       fontSize: 34,
       fontWeight: FontWeight.bold,
       textAlign: TextAlign.center,
     );
     drawText(
-      'DIGITAL RECEIPT',
+      'STRUK DIGITAL',
       80,
       fontSize: 18,
       fontWeight: FontWeight.w600,
@@ -100,13 +100,13 @@ class ReceiptImageGenerator {
     drawText('TOTAL', y + 16, fontSize: 26, fontWeight: FontWeight.bold);
     drawText(formatRupiah(transaction.total), y + 16,
         fontSize: 26, fontWeight: FontWeight.bold, textAlign: TextAlign.right);
-    drawText('Receipt #${transaction.id.substring(0, 8).toUpperCase()}', y + 72,
+    drawText('Struk #${transaction.id.substring(0, 8).toUpperCase()}', y + 72,
         fontSize: 16, textAlign: TextAlign.center, color: Colors.grey.shade700);
 
     final image = await recorder.endRecording().toImage(width, height);
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
     if (bytes == null) {
-      throw StateError('Could not generate the receipt image.');
+      throw StateError('Gagal membuat gambar struk.');
     }
     return bytes.buffer.asUint8List();
   }

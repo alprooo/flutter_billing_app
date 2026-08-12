@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import 'config/routes/app_routes.dart';
 import 'core/data/hive_database.dart';
 import 'core/config/supabase_config.dart';
@@ -17,9 +20,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('id_ID');
+  Intl.defaultLocale = 'id_ID';
   await HiveDatabase.init();
-  if (!SupabaseConfig.isConfigured) {
-    runApp(const ConfigRequiredPage());
+  final configError = SupabaseConfig.validationError;
+  if (configError != null) {
+    runApp(ConfigRequiredPage(message: configError));
     return;
   }
   await Supabase.initialize(
@@ -51,8 +57,15 @@ class MyApp extends StatelessWidget {
             create: (context) => di.sl<PrinterBloc>()..add(InitPrinterEvent())),
       ],
       child: MaterialApp.router(
-        title: 'Anugrah Ukui',
+        title: 'ANUGRAH FOTO',
         theme: AppTheme.lightTheme,
+        locale: const Locale('id', 'ID'),
+        supportedLocales: const [Locale('id', 'ID')],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         routerConfig: router,
         debugShowCheckedModeBanner: false,
       ),

@@ -29,7 +29,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings',
+        title: const Text('Pengaturan',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
@@ -50,7 +50,7 @@ class _SettingsPageState extends State<SettingsPage> {
               padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
               child: BlocBuilder<ShopBloc, ShopState>(
                 builder: (context, state) {
-                  String shopName = 'Elite Groceries';
+                  String shopName = 'ANUGRAH FOTO';
                   String initials = 'EG';
                   if (state is ShopLoaded && state.shop.name.isNotEmpty) {
                     shopName = state.shop.name;
@@ -99,20 +99,20 @@ class _SettingsPageState extends State<SettingsPage> {
             const SizedBox(height: 24),
 
             // Management Section
-            _buildSectionHeader('Management'),
+            _buildSectionHeader('Manajemen'),
             _buildListGroup(
               children: [
                 _buildListItem(
                   icon: Icons.qr_code_scanner,
-                  title: 'Products',
-                  subtitle: 'Manage stock and barcodes',
+                  title: 'Produk',
+                  subtitle: 'Kelola stok dan barcode',
                   onTap: () => context.push('/products'),
                 ),
                 _buildDivider(),
                 _buildListItem(
                   icon: Icons.storefront,
-                  title: 'Shop Details',
-                  subtitle: 'Edit business info & address',
+                  title: 'Informasi Toko',
+                  subtitle: 'Ubah informasi dan alamat toko',
                   onTap: () => context.push('/shop'),
                 ),
               ],
@@ -121,7 +121,7 @@ class _SettingsPageState extends State<SettingsPage> {
             const SizedBox(height: 24),
 
             // Hardware Section
-            _buildSectionHeader('Hardware'),
+            _buildSectionHeader('Perangkat'),
             BlocConsumer<PrinterBloc, PrinterState>(
               listener: (context, state) {
                 if (state.errorMessage != null) {
@@ -130,7 +130,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       backgroundColor: Colors.red));
                 } else if (state.status == PrinterStatus.connected) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text('Connected to printer'),
+                      content: Text('Printer terhubung'),
                       backgroundColor: Colors.green));
                 }
               },
@@ -139,13 +139,13 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     _buildListItem(
                       icon: Icons.print,
-                      title: 'Print Device',
+                      title: 'Printer',
                       subtitleWidget: Row(
                         children: [
                           Text(
                             state.connectedMac != null
-                                ? (state.connectedName ?? 'Printer connected')
-                                : 'No printer connected',
+                                ? (state.connectedName ?? 'Printer terhubung')
+                                : 'Printer belum terhubung',
                             style: TextStyle(
                                 fontSize: 12, color: Colors.grey[500]),
                           ),
@@ -159,7 +159,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(color: Colors.teal[200]!)),
                               child: Text(
-                                'CONNECTED',
+                                'TERHUBUNG',
                                 style: TextStyle(
                                     fontSize: 9,
                                     fontWeight: FontWeight.bold,
@@ -206,7 +206,7 @@ class _SettingsPageState extends State<SettingsPage> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               child: Text(
-                "To connect a new device, tap on the Settings gear to pair in phone's Bluetooth settings, then return and hit Refresh.",
+                'Untuk menyambungkan perangkat baru, ketuk ikon roda gigi untuk memasangkan printer di pengaturan Bluetooth, lalu kembali dan ketuk Muat Ulang.',
                 style: TextStyle(
                     fontSize: 11,
                     fontStyle: FontStyle.italic,
@@ -215,7 +215,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
 
             const SizedBox(height: 48),
-            _buildSectionHeader('Session'),
+            _buildSectionHeader('Sesi'),
             _buildListGroup(
               children: [
                 BlocBuilder<AuthBloc, AuthState>(
@@ -223,7 +223,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     final user = state is Authenticated ? state.user : null;
                     return _buildListItem(
                       icon: Icons.person_outline,
-                      title: user?.displayName ?? 'Signed in user',
+                      title: user?.displayName ?? 'Pengguna masuk',
                       subtitle: user == null
                           ? ''
                           : '${user.role.name.toUpperCase()} • ${user.email}',
@@ -234,8 +234,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 _buildDivider(),
                 _buildListItem(
                   icon: Icons.logout,
-                  title: 'Sign out',
-                  subtitle: 'End this POS session',
+                  title: 'Keluar',
+                  subtitle: 'Akhiri sesi POS ini',
                   trailingIcon: null,
                   onTap: () => context
                       .read<AuthBloc>()

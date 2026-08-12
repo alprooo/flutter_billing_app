@@ -27,14 +27,14 @@ class SaleTransaction extends Equatable {
 }
 
 class SaleTransactionItem extends Equatable {
-  final String productId;
+  final String? productId;
   final String barcode;
   final String productName;
   final double unitPrice;
   final int quantity;
 
   const SaleTransactionItem({
-    required this.productId,
+    this.productId,
     required this.barcode,
     required this.productName,
     required this.unitPrice,
@@ -44,6 +44,6 @@ class SaleTransactionItem extends Equatable {
   double get total => unitPrice * quantity;
 
   @override
-  List<Object> get props =>
+  List<Object?> get props =>
       [productId, barcode, productName, unitPrice, quantity];
 }

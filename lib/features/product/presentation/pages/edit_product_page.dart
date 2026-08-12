@@ -8,6 +8,7 @@ import '../bloc/product_bloc.dart';
 import '../../domain/entities/product.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/app_validators.dart';
+import '../../../../core/utils/thousands_separator_input_formatter.dart';
 
 class EditProductPage extends StatefulWidget {
   final Product product;
@@ -56,7 +57,7 @@ class _EditProductPageState extends State<EditProductPage> {
                 size: 32, color: Theme.of(context).primaryColor),
             onPressed: () => context.pop(),
           ),
-          title: const Text('Edit Product',
+          title: const Text('Ubah Produk',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           centerTitle: true,
         ),
@@ -104,22 +105,24 @@ class _EditProductPageState extends State<EditProductPage> {
                     ),
                   ),
 
-                  const InputLabel(text: 'Product Name'),
+                  const InputLabel(text: 'Nama Produk'),
 
                   TextFormField(
                     initialValue: _name,
                     textCapitalization: TextCapitalization.words,
-                    validator: AppValidators.required('Please enter a name'),
+                    validator: AppValidators.required('Masukkan nama produk'),
                     onSaved: (value) => _name = value!,
                   ),
                   const SizedBox(height: 24),
 
-                  const InputLabel(text: 'Price'),
+                  const InputLabel(text: 'Harga'),
 
                   TextFormField(
-                    initialValue: _price.toStringAsFixed(2),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    initialValue: formatThousandsSeparatedInt(_price.round()),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: const [
+                      IndonesianThousandsSeparatorInputFormatter(),
+                    ],
                     decoration: const InputDecoration(
                       prefixText: 'Rp ',
                       prefixStyle: TextStyle(
@@ -128,7 +131,8 @@ class _EditProductPageState extends State<EditProductPage> {
                           color: Colors.black),
                     ),
                     validator: AppValidators.price,
-                    onSaved: (value) => _price = double.parse(value!),
+                    onSaved: (value) =>
+                        _price = parseThousandsSeparatedInt(value)!.toDouble(),
                   ),
                 ],
               ),
@@ -138,7 +142,7 @@ class _EditProductPageState extends State<EditProductPage> {
         bottomNavigationBar: PrimaryButton(
           onPressed: _submit,
           icon: Icons.save,
-          label: 'Save Changes',
+          label: 'Simpan Perubahan',
         ));
   }
 }

@@ -10,13 +10,13 @@ class TransactionDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('Transaction details')),
+        appBar: AppBar(title: const Text('Rincian transaksi')),
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
             Text(DateFormat('d MMM y, HH:mm').format(transaction.completedAt)),
             const SizedBox(height: 4),
-            Text('Staff: ${transaction.staffName}'),
+            Text('Staf: ${transaction.staffName}'),
             const Divider(height: 32),
             ...transaction.items.map((item) => ListTile(
                   contentPadding: EdgeInsets.zero,

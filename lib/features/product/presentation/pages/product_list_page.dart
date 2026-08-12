@@ -9,6 +9,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/thousands_separator_input_formatter.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../domain/entities/product.dart';
 import '../bloc/product_bloc.dart';
@@ -73,7 +74,7 @@ class _ProductListPageState extends State<ProductListPage> {
           .convert(utf8.decode(result.files.single.bytes!));
       if (rows.length < 2) {
         throw const FormatException(
-            'The CSV must include a header and one product.');
+            'CSV harus memiliki header dan minimal satu produk.');
       }
       final headers = rows.first
           .map((value) => value.toString().trim().toLowerCase())
@@ -81,7 +82,7 @@ class _ProductListPageState extends State<ProductListPage> {
       const required = ['barcode', 'name', 'price', 'stock'];
       if (!required.every(headers.contains)) {
         throw const FormatException(
-            'Required headers: barcode, name, price, stock.');
+            'Header wajib: barcode, name, price, stock.');
       }
       final parsed = <Product>[];
       final errors = <String>[];
@@ -101,7 +102,7 @@ class _ProductListPageState extends State<ProductListPage> {
             stock < 0 ||
             !barcodes.add(barcode)) {
           errors.add(
-              'Row ${rowNumber + 1}: invalid values or duplicate barcode.');
+              'Baris ${rowNumber + 1}: nilai tidak valid atau barcode duplikat.');
           continue;
         }
         parsed.add(Product(
@@ -118,7 +119,7 @@ class _ProductListPageState extends State<ProductListPage> {
         await showDialog<void>(
             context: context,
             builder: (context) => AlertDialog(
-                  title: const Text('Import needs correction'),
+                  title: const Text('Impor perlu diperbaiki'),
                   content:
                       SingleChildScrollView(child: Text(errors.join('\n'))),
                   actions: [
@@ -132,16 +133,16 @@ class _ProductListPageState extends State<ProductListPage> {
       final confirm = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-                title: const Text('Import products'),
+                title: const Text('Impor produk'),
                 content: Text(
-                    'Import ${parsed.length} new products? Existing barcodes will not be changed.'),
+                    'Impor ${parsed.length} produk baru? Barcode yang sudah ada tidak akan diubah.'),
                 actions: [
                   TextButton(
                       onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancel')),
+                      child: const Text('Batal')),
                   FilledButton(
                       onPressed: () => Navigator.pop(context, true),
-                      child: const Text('Import')),
+                      child: const Text('Impor')),
                 ],
               ));
       if (confirm == true && mounted) {
@@ -161,14 +162,14 @@ class _ProductListPageState extends State<ProductListPage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: !widget.embedded,
-        title: const Text('Inventory'),
+        title: const Text('Stok'),
         actions: [
           if (canManage)
             IconButton(
                 onPressed: () =>
                     _importCsv(context.read<ProductBloc>().state.products),
                 icon: const Icon(Icons.upload_file),
-                tooltip: 'Import CSV')
+                tooltip: 'Impor CSV')
         ],
       ),
       body: BlocConsumer<ProductBloc, ProductState>(
@@ -183,6 +184,7 @@ class _ProductListPageState extends State<ProductListPage> {
           }
         },
         builder: (context, state) {
+          final totalProducts = state.products.length;
           final products = state.products
               .where((product) =>
                   product.name.toLowerCase().contains(_query) ||
@@ -197,7 +199,7 @@ class _ProductListPageState extends State<ProductListPage> {
                         controller: _searchController,
                         decoration: const InputDecoration(
                             prefixIcon: Icon(Icons.search),
-                            hintText: 'Search or enter barcode'))),
+                            hintText: 'Cari atau masukkan barcode'))),
                 const SizedBox(width: 8),
                 IconButton(
                     onPressed: _scan,
@@ -205,12 +207,27 @@ class _ProductListPageState extends State<ProductListPage> {
                     color: AppTheme.primaryColor),
               ]),
             ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  _query.isEmpty
+                      ? '$totalProducts produk'
+                      : '${products.length} dari $totalProducts produk',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ),
+            ),
             Expanded(
               child: state.status == ProductStatus.loading &&
                       state.products.isEmpty
                   ? const Center(child: CircularProgressIndicator())
                   : products.isEmpty
-                      ? const Center(child: Text('No products found.'))
+                      ? const Center(child: Text('Produk tidak ditemukan.'))
                       : ListView.separated(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
                           itemCount: products.length,
@@ -222,7 +239,7 @@ class _ProductListPageState extends State<ProductListPage> {
                                 child: ListTile(
                               title: Text(product.name),
                               subtitle: Text(
-                                  '${product.barcode}\nStock: ${product.stock} • ${formatRupiah(product.price)}'),
+                                  '${product.barcode}\nStok: ${product.stock} • ${formatRupiah(product.price)}'),
                               isThreeLine: true,
                               trailing: canManage
                                   ? Wrap(spacing: 0, children: [
@@ -230,7 +247,7 @@ class _ProductListPageState extends State<ProductListPage> {
                                           onPressed: () => _restock(product),
                                           icon: const Icon(
                                               Icons.add_box_outlined),
-                                          tooltip: 'Restock'),
+                                          tooltip: 'Restok'),
                                       IconButton(
                                           onPressed: () => context.push(
                                               '/products/edit/${product.id}',
@@ -255,7 +272,7 @@ class _ProductListPageState extends State<ProductListPage> {
           ? FloatingActionButton.extended(
               onPressed: () => context.push('/products/add'),
               icon: const Icon(Icons.add),
-              label: const Text('Add / Restock'))
+              label: const Text('Tambah / Restok'))
           : null,
     );
   }
@@ -263,18 +280,18 @@ class _ProductListPageState extends State<ProductListPage> {
   void _confirmDelete(Product product) => showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-            title: const Text('Delete product'),
-            content: Text('Delete ${product.name}?'),
+            title: const Text('Hapus produk'),
+            content: Text('Hapus ${product.name}?'),
             actions: [
               TextButton(
                   onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('Cancel')),
+                  child: const Text('Batal')),
               FilledButton(
                   onPressed: () {
                     context.read<ProductBloc>().add(DeleteProduct(product.id));
                     Navigator.pop(dialogContext);
                   },
-                  child: const Text('Delete')),
+                  child: const Text('Hapus')),
             ],
           ));
 }
@@ -299,39 +316,43 @@ class _RestockDialogState extends State<_RestockDialog> {
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
-    Navigator.of(context).pop(int.parse(_quantityController.text.trim()));
+    Navigator.of(context)
+        .pop(parseThousandsSeparatedInt(_quantityController.text)!);
   }
 
   @override
   Widget build(BuildContext context) => AlertDialog(
         scrollable: true,
-        title: Text('Restock ${widget.productName}'),
+        title: Text('Restok ${widget.productName}'),
         content: Form(
           key: _formKey,
           child: TextFormField(
             controller: _quantityController,
             autofocus: true,
             keyboardType: TextInputType.number,
+            inputFormatters: const [
+              IndonesianThousandsSeparatorInputFormatter(),
+            ],
             textInputAction: TextInputAction.done,
             onFieldSubmitted: (_) => _submit(),
             validator: (value) {
-              final quantity = int.tryParse(value?.trim() ?? '');
+              final quantity = parseThousandsSeparatedInt(value);
               if (quantity == null || quantity <= 0) {
-                return 'Enter a whole number greater than zero.';
+                return 'Masukkan bilangan bulat lebih dari nol.';
               }
               return null;
             },
             decoration: const InputDecoration(
-              labelText: 'Quantity to add',
-              hintText: 'e.g. 24',
+              labelText: 'Jumlah yang ditambahkan',
+              hintText: 'contoh: 24',
             ),
           ),
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel')),
-          FilledButton(onPressed: _submit, child: const Text('Restock')),
+              child: const Text('Batal')),
+          FilledButton(onPressed: _submit, child: const Text('Restok')),
         ],
       );
 }

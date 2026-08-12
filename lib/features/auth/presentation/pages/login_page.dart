@@ -51,31 +51,35 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Icon(Icons.storefront, size: 64),
+                    Image.asset(
+                      'logo-new.png',
+                      height: 88,
+                    ),
                     const SizedBox(height: 20),
-                    const Text('Anugrah Ukui',
+                    const Text('ANUGRAH FOTO',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             fontSize: 28, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
-                    const Text('Sign in to continue',
+                    const Text('Masuk untuk melanjutkan',
                         textAlign: TextAlign.center),
                     const SizedBox(height: 32),
                     TextFormField(
                       controller: _usernameController,
                       autocorrect: false,
-                      decoration: const InputDecoration(labelText: 'Username'),
+                      decoration:
+                          const InputDecoration(labelText: 'Nama pengguna'),
                       validator: (value) =>
                           value != null && value.trim().isNotEmpty
                               ? null
-                              : 'Enter your username',
+                              : 'Masukkan nama pengguna',
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
-                        labelText: 'Password',
+                        labelText: 'Kata sandi',
                         suffixIcon: IconButton(
                           icon: Icon(_obscurePassword
                               ? Icons.visibility
@@ -86,7 +90,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       validator: (value) => value != null && value.length >= 6
                           ? null
-                          : 'Password must be at least 6 characters',
+                          : 'Kata sandi minimal 6 karakter',
                       onFieldSubmitted: (_) => _signIn(),
                     ),
                     if (error != null) ...[
@@ -104,7 +108,7 @@ class _LoginPageState extends State<LoginPage> {
                                 height: 20,
                                 child:
                                     CircularProgressIndicator(strokeWidth: 2))
-                            : const Text('Sign in'),
+                            : const Text('Masuk'),
                       ),
                     ),
                   ],
