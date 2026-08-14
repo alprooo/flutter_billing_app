@@ -16,6 +16,12 @@ class AppUser extends Equatable {
   });
 
   bool get canManageInventory => role == AppRole.admin;
+  bool get canAddProducts => role == AppRole.admin || role == AppRole.staff;
+  bool get canRestockProducts =>
+      role == AppRole.admin || role == AppRole.staff;
+  bool get canEditProducts => role == AppRole.admin;
+  bool get canDeleteProducts => role == AppRole.admin;
+  bool get canImportProducts => role == AppRole.admin;
 
   @override
   List<Object> get props => [id, email, displayName, role];

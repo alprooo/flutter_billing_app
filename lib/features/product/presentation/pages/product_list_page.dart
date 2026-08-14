@@ -39,9 +39,16 @@ class _ProductListPageState extends State<ProductListPage> {
     super.dispose();
   }
 
-  bool get _canManage =>
-      context.read<AuthBloc>().state is Authenticated &&
-      (context.read<AuthBloc>().state as Authenticated).user.canManageInventory;
+  Authenticated? get _authState {
+    final state = context.read<AuthBloc>().state;
+    return state is Authenticated ? state : null;
+  }
+
+  bool get _canAddProducts => _authState?.user.canAddProducts ?? false;
+  bool get _canRestockProducts => _authState?.user.canRestockProducts ?? false;
+  bool get _canEditProducts => _authState?.user.canEditProducts ?? false;
+  bool get _canDeleteProducts => _authState?.user.canDeleteProducts ?? false;
+  bool get _canImportProducts => _authState?.user.canImportProducts ?? false;
 
   Future<void> _scan() async {
     final barcode = await context.push<String>('/scanner');
@@ -158,13 +165,17 @@ class _ProductListPageState extends State<ProductListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final canManage = _canManage;
+    final canAddProducts = _canAddProducts;
+    final canRestockProducts = _canRestockProducts;
+    final canEditProducts = _canEditProducts;
+    final canDeleteProducts = _canDeleteProducts;
+    final canImportProducts = _canImportProducts;
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: !widget.embedded,
         title: const Text('Stok'),
         actions: [
-          if (canManage)
+          if (canImportProducts)
             IconButton(
                 onPressed: () =>
                     _importCsv(context.read<ProductBloc>().state.products),
@@ -235,32 +246,34 @@ class _ProductListPageState extends State<ProductListPage> {
                               const SizedBox(height: 8),
                           itemBuilder: (context, index) {
                             final product = products[index];
+                            final actions = <Widget>[
+                              if (canRestockProducts)
+                                IconButton(
+                                    onPressed: () => _restock(product),
+                                    icon:
+                                        const Icon(Icons.add_box_outlined),
+                                    tooltip: 'Restok'),
+                              if (canEditProducts)
+                                IconButton(
+                                    onPressed: () => context.push(
+                                        '/products/edit/${product.id}',
+                                        extra: product),
+                                    icon: const Icon(Icons.edit_outlined)),
+                              if (canDeleteProducts)
+                                IconButton(
+                                    onPressed: () => _confirmDelete(product),
+                                    icon: const Icon(Icons.delete_outline,
+                                        color: Colors.red)),
+                            ];
                             return Card(
                                 child: ListTile(
                               title: Text(product.name),
                               subtitle: Text(
                                   '${product.barcode}\nStok: ${product.stock} • ${formatRupiah(product.price)}'),
                               isThreeLine: true,
-                              trailing: canManage
-                                  ? Wrap(spacing: 0, children: [
-                                      IconButton(
-                                          onPressed: () => _restock(product),
-                                          icon: const Icon(
-                                              Icons.add_box_outlined),
-                                          tooltip: 'Restok'),
-                                      IconButton(
-                                          onPressed: () => context.push(
-                                              '/products/edit/${product.id}',
-                                              extra: product),
-                                          icon:
-                                              const Icon(Icons.edit_outlined)),
-                                      IconButton(
-                                          onPressed: () =>
-                                              _confirmDelete(product),
-                                          icon: const Icon(Icons.delete_outline,
-                                              color: Colors.red)),
-                                    ])
-                                  : null,
+                              trailing: actions.isEmpty
+                                  ? null
+                                  : Wrap(spacing: 0, children: actions),
                             ));
                           },
                         ),
@@ -268,7 +281,7 @@ class _ProductListPageState extends State<ProductListPage> {
           ]);
         },
       ),
-      floatingActionButton: canManage
+      floatingActionButton: canAddProducts
           ? FloatingActionButton.extended(
               onPressed: () => context.push('/products/add'),
               icon: const Icon(Icons.add),
