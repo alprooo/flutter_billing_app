@@ -220,19 +220,43 @@ class _ProductListPageState extends State<ProductListPage> {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  _query.isEmpty
-                      ? '$totalProducts produk'
-                      : '${products.length} dari $totalProducts produk',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _query.isEmpty
+                          ? '$totalProducts produk'
+                          : '${products.length} dari $totalProducts produk',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ),
+                  if (canAddProducts)
+                    FilledButton.icon(
+                      onPressed: () => context.push('/products/add'),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Tambah / Restok'),
+                    ),
+                ],
               ),
             ),
+            if (canAddProducts || canRestockProducts)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    canEditProducts
+                        ? 'Gunakan tombol pada setiap produk untuk restok, edit, atau hapus.'
+                        : 'Akun staff bisa tambah produk baru dan restok stok dari halaman ini.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.grey.shade600,
+                        ),
+                  ),
+                ),
+              ),
             Expanded(
               child: state.status == ProductStatus.loading &&
                       state.products.isEmpty
@@ -249,32 +273,39 @@ class _ProductListPageState extends State<ProductListPage> {
                             final actions = <Widget>[
                               if (canRestockProducts)
                                 IconButton(
-                                    onPressed: () => _restock(product),
-                                    icon:
-                                        const Icon(Icons.add_box_outlined),
-                                    tooltip: 'Restok'),
+                                  onPressed: () => _restock(product),
+                                  icon: const Icon(Icons.add_box_outlined),
+                                  tooltip: 'Restok',
+                                ),
                               if (canEditProducts)
                                 IconButton(
-                                    onPressed: () => context.push(
-                                        '/products/edit/${product.id}',
-                                        extra: product),
-                                    icon: const Icon(Icons.edit_outlined)),
+                                  onPressed: () => context.push(
+                                    '/products/edit/${product.id}',
+                                    extra: product,
+                                  ),
+                                  icon: const Icon(Icons.edit_outlined),
+                                ),
                               if (canDeleteProducts)
                                 IconButton(
-                                    onPressed: () => _confirmDelete(product),
-                                    icon: const Icon(Icons.delete_outline,
-                                        color: Colors.red)),
+                                  onPressed: () => _confirmDelete(product),
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    color: Colors.red,
+                                  ),
+                                ),
                             ];
                             return Card(
-                                child: ListTile(
-                              title: Text(product.name),
-                              subtitle: Text(
-                                  '${product.barcode}\nStok: ${product.stock} • ${formatRupiah(product.price)}'),
-                              isThreeLine: true,
-                              trailing: actions.isEmpty
-                                  ? null
-                                  : Wrap(spacing: 0, children: actions),
-                            ));
+                              child: ListTile(
+                                title: Text(product.name),
+                                subtitle: Text(
+                                  '${product.barcode}\nStok: ${product.stock} • ${formatRupiah(product.price)}',
+                                ),
+                                isThreeLine: true,
+                                trailing: actions.isEmpty
+                                    ? null
+                                    : Wrap(spacing: 0, children: actions),
+                              ),
+                            );
                           },
                         ),
             ),
